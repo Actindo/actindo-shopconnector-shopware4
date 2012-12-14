@@ -88,7 +88,6 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
     protected function exportCustomer($filters) {
         $query = $this->util->createQueryFromFilters($filters, self::$customerColumnMapping);
         $query['order'][] = '`su`.`id` DESC';
-        error_log('exportCustomer query: ' . $this->util->dump($query));
         // select user information and billing address info
         $sql = sprintf('
             SELECT SQL_CALC_FOUND_ROWS
@@ -115,19 +114,19 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
             $info = array(
                 'deb_kred_id'   => ((int) $customer['customernumber'] > 0) ? (int) $customer['customernumber'] : 0,
                 'anrede'        => $this->util->getSalutation($customer['salutation']),
-                'kurzname'      => !empty($customer['company']) ? $customer['company'] : sprintf('%s, %s', $customer['lastname'], $customer['firstname']),
-                'firma'         => $customer['company'],
-                'name'          => $customer['lastname'],
-                'vorname'       => $customer['firstname'],
+                'kurzname'      => !empty($customer['company']) ? (string) $customer['company'] : sprintf('%s, %s', $customer['lastname'], $customer['firstname']),
+                'firma'         => (string) $customer['company'],
+                'name'          => (string) $customer['lastname'],
+                'vorname'       => (string) $customer['firstname'],
                 'adresse'       => sprintf('%s %s', $customer['street'], str_replace(' ', '', $customer['streetnumber'])),
-                'adresse2'      => $customer['department'],
-                'plz'           => $customer['zipcode'],
-                'ort'           => $customer['city'],
-                'land'          => $customer['countryiso'],
-                'tel'           => $customer['phone'],
-                'fax'           => $customer['fax'],
-                'ustid'         => $customer['ustid'],
-                'email'         => $customer['email'],
+                'adresse2'      => (string) $customer['department'],
+                'plz'           => (string) $customer['zipcode'],
+                'ort'           => (string) $customer['city'],
+                'land'          => (string) $customer['countryiso'],
+                'tel'           => (string) $customer['phone'],
+                'fax'           => (string) $customer['fax'],
+                'ustid'         => (string) $customer['ustid'],
+                'email'         => (string) $customer['email'],
                 'print_brutto'  => empty($customer['net']) ? 0 : 1, // i think this should be the other way round
                 '_customers_id' => (int) $customer['userID'],
                 'currency'      => 'EUR',
@@ -151,14 +150,14 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
                 $info['delivery_addresses'][] = array(
                     'delivery_id'       => (int) $address['id'],
                     'delivery_kurzname' => (string) (!empty($address['company']) ? $address['company'] : $address['lastname']),
-                    'delivery_firma'    => $address['company'],
-                    'delivery_name'     => $address['lastname'],
-                    'delivery_vorname'  => $address['firstname'],
+                    'delivery_firma'    => (string) $address['company'],
+                    'delivery_name'     => (string) $address['lastname'],
+                    'delivery_vorname'  => (string) $address['firstname'],
                     'delivery_adresse'  => sprintf('%s %s', $address['street'], str_replace(' ', '', $address['streetnumber'])),
-                    'delivery_adresse2' => $address['department'],
-                    'delivery_plz'      => $address['zipcode'],
-                    'delivery_ort'      => $address['city'],
-                    'delivery_land'     => $address['countryiso'],
+                    'delivery_adresse2' => (string) $address['department'],
+                    'delivery_plz'      => (string) $address['zipcode'],
+                    'delivery_ort'      => (string) $address['city'],
+                    'delivery_land'     => (string) $address['countryiso'],
                 );
             }
             
