@@ -27,7 +27,7 @@ class Shopware_Controllers_Frontend_Actindo extends Enlight_Controller_Action {
         $pieces = explode('_', $className);
         array_shift($pieces); // remove leading "Actindo_"
         
-        $path .= sprintf('%s%s.php', Shopware()->Plugins()->Core()->Actindo()->Path(), implode('/', $pieces));
+        $path = sprintf('%s%s.php', Shopware()->Plugins()->Core()->Actindo()->Path(), implode('/', $pieces));
         if(is_file($path)) {
             require($path);
             return true;

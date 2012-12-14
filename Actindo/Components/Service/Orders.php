@@ -92,7 +92,12 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
         
         $response = array();
         while($order = array_shift($list['data'])) {
-            $customer = $this->_getCustomerById($order['customerId']);
+            try {
+                $customer = $this->_getCustomerById($order['customerId']);
+            } catch(Shopware\Components\Api\Exception\NotFoundException $e) {
+                // shouldn't happen but some beta testers reported this error
+                continue;
+            }
             $payment = $this->util->getPaymentMeans($order['paymentId']);
             
             $response[$order['id']] = null;
