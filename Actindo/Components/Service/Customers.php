@@ -48,15 +48,12 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
      * @return struct
      */
     public function getList($list, $filters) {
-        error_log('customers.get_list; ' . $this->util->dump($list));
-        error_log($this->util->dump($filters));
         if($list) {
             $res = $this->exportList($filters);
         }
         else {
             $res = $this->exportCustomer($filters);
         }
-        error_log($this->util->dump($res));
         return $res;
     }
     
@@ -188,7 +185,6 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
     protected function exportList($filters) {
         $query = $this->util->createQueryFromFilters($filters, self::$customerColumnMapping);
         $query['order'][] = '`su`.`id` DESC';
-        error_log('export list query: ' . $this->util->dump($query));
         
         $sql = sprintf('
             SELECT SQL_CALC_FOUND_ROWS
