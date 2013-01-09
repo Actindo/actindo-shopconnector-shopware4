@@ -103,6 +103,10 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             $response[$order['id']] = null;
             $ref =& $response[$order['id']];
             
+            if(!isset($customer['shipping'])) {
+                $customer['shipping'] =& $customer['billing'];
+            }
+            
             $billingCountry  = $this->util->findCountryById($customer['billing']['countryId']);
             $shippingCountry = $this->util->findCountryById($customer['shipping']['countryId']);
             $billingCountryIso  = ($billingCountry === false)  ? 'de' : $billingCountry['countryiso']; // fallback to de
@@ -328,9 +332,9 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
      */
     protected function _getCustomerById($id) {
         static $cache = array();
-        $customers = $this->resources->customer;
         
         if(!isset($cache[$id])) {
+            $customers = $this->resources->customer;
             $cache[$id] = $customers->getOne($id);
         }
         return $cache[$id];
