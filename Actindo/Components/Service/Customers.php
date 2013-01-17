@@ -111,7 +111,7 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
             $info = array(
                 'deb_kred_id'   => ((int) $customer['customernumber'] > 0) ? (int) $customer['customernumber'] : 0,
                 'anrede'        => $this->util->getSalutation($customer['salutation']),
-                'kurzname'      => !empty($customer['company']) ? (string) $customer['company'] : sprintf('%s, %s', $customer['lastname'], $customer['firstname']),
+                'kurzname'      => !empty($customer['company']) ? $customer['company'] : sprintf('%s %s', $customer['firstname'], $customer['lastname']),
                 'firma'         => (string) $customer['company'],
                 'name'          => (string) $customer['lastname'],
                 'vorname'       => (string) $customer['firstname'],

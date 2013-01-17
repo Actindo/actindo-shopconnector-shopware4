@@ -288,6 +288,22 @@ class Actindo_Components_Util {
     }
     
     /**
+     * finds a customer group by its group key
+     * 
+     * @param string $key group key to look up
+     * @return boolean|array false if a group with the given key could not be found, otherwise assoticative array with information about the group
+     */
+    public function findCustomerGroupByKey($key) {
+        $groups = $this->getCustomerGroups();
+        foreach($groups AS $id => &$group) {
+            if($group['groupkey'] == $key) {
+                return $groups[$id];
+            }
+        }
+        return false;
+    }
+    
+    /**
      * returns country information for a given country id
      * 
      * @param int $id country id to look up
@@ -776,7 +792,12 @@ class Actindo_Components_Util {
             if(isset(self::$salutationMap[$key])) {
                 return self::$salutationMap[$key];
             }
-            throw new Actindo_Components_Exception('Unknown salutation key: ' . $key);
+            foreach(self::$salutationMap AS $mapped) {
+                if($mapped == $key) {
+                    return $key;
+                }
+            }
+            return current(self::$salutationMap);
         }
         return self::$salutationMap;
     }

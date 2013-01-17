@@ -94,6 +94,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
         while($order = array_shift($list['data'])) {
             try {
                 $customer = $this->_getCustomerById($order['customerId']);
+                $customerGroup = $this->util->findCustomerGroupByKey($customer['groupKey']);
             } catch(Shopware\Components\Api\Exception\NotFoundException $e) {
                 // shouldn't happen but some beta testers reported this error
                 continue;
@@ -148,7 +149,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                     'fax'          => (string) $customer['billing']['fax'],
                     'ustid'        => (string) $customer['billing']['vatId'],
                     'email'        => (string) $customer['email'],
-                    'preisgruppe'  => (string) $customer['groupKey'],
+                    'preisgruppe'  => (int) $customerGroup['id'],
                     'gebdat'       => ($customer['billing']['birthday'] instanceof DateTime) ? $customer['billing']['birthday']->format('Y-m-d') : '0000-00-00',
                     'print_brutto' => $order['net'] ? 0 : 1,
                 ),

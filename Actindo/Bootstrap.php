@@ -235,6 +235,9 @@ class Shopware_Plugins_Core_Actindo_Bootstrap extends Shopware_Components_Plugin
             return; // plugin configured not to notify actindo about new orders
         }
         $notificationUrl = $config->notificationUrl;
+        if(!class_exists('Actindo_Components_Util')) {
+            require_once(dirname(__FILE__) . '/Components/Util.php');
+        }
         if(!Actindo_Components_Util::isValidUrl($notificationUrl)) {
             return;
         }
