@@ -941,11 +941,12 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $update update array to be put intp api->update()
      */
     protected function _updateCategories(&$product, &$update) {
-        $update['categories'] = array(
-            array('id' => (int) $product['swg']),
-        );
-        foreach($product['shop']['all_categories'] AS $categoryID) {
-            $update['categories'][] = array('id' => (int) $categoryID);
+        $categoryIDs = array_merge(array($product['swg']), $product['shop']['all_categories']);
+        $categoryIDs = array_unique(array_filter(array_map('intval', $categoryIDs)));
+        
+        $update['categories'] = array();
+        foreach($categoryIDs AS $categoryID) {
+            $update['categories'][] = array('id' => $categoryID);
         }
     }
     
