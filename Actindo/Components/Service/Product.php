@@ -682,7 +682,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $combination = array_merge($combination, array(
                 'data' => array(
                     'products_status' => $detail['active'],
-                    'products_ean' => $detail['ean'],
+                    'products_ean' => (string) $detail['ean'],
                     'products_is_standard' => ($detail['id'] == $article['mainDetail']['id']),
                 ),
                 'grundpreis' => 0,                  // set below in $this->_exportPriceData()
