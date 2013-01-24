@@ -1142,14 +1142,14 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $from = (int) $info['preis_range'.$i];
                     $ranges[$from] = array(
                         'from'  => $from,
-                        'price' => $this->util->calculateGrossPrice($info['preis_gruppe'.$i], $taxRate, $info['is_brutto']),
+                        'price' => $this->util->calculateGrossPrice($info['preis_gruppe'.$i], $taxRate, $this->util->findCustomerGroupTaxById($info['is_brutto'])),
                     );
                 }
             }
             // baseprice
             $ranges[1] = array(
                 'from'  => 1,
-                'price' => $this->util->calculateGrossPrice($info['grundpreis'], $taxRate, $info['is_brutto']),
+                'price' => $this->util->calculateGrossPrice($info['grundpreis'], $taxRate, $this->util->findCustomerGroupTaxById($info['is_brutto'])),
             );
             
             ksort($ranges, SORT_NUMERIC);

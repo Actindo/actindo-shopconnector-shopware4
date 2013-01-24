@@ -304,6 +304,23 @@ class Actindo_Components_Util {
     }
     
     /**
+     * returns information about tax group of customer group
+     *
+     * 2013-01-23 by Jens Twesmann
+     * @param int $id customer group id to look for
+     * @return int 1 if tax for group is netto, 0 if not
+     */
+    public function findCustomerGroupTaxById($id) {
+        $groups = $this->getCustomerGroups();
+        if(isset($groups[$id])) {
+            if($groups[$id]['taxinput'] == 0) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+    
+    /**
      * returns country information for a given country id
      * 
      * @param int $id country id to look up
