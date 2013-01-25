@@ -54,13 +54,13 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
      */
     protected function _dispatch(Zend_Server_Method_Definition $invocable, array $params) {
         if(self::ACTINDO_TRANSPORT_CHARSET == 'ISO-8859-1' && self::SHOPWARE_CHARSET == 'UTF-8') {
-            Actindo_Components_Util::utf8Encode($params, array('images'));
+            Actindo_Components_Util::utf8Encode($params, array('image'));
         }
         
         $result = parent::_dispatch($invocable, $params);
         
         if(self::ACTINDO_TRANSPORT_CHARSET == 'ISO8859-1' && self::SHOPWARE_CHARSET == 'UTF-8') {
-            Actindo_Components_Util::utf8Decode($result, array('images'));
+            Actindo_Components_Util::utf8Decode($result, array('image'));
         }
         
         return $result;
