@@ -494,7 +494,11 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $response response array, assumes that the key 'properties' is initialised as array
      */
     protected function _exportProperties(&$article, &$response) {
-        // article attributes
+        $languages = $this->util->getLanguages();
+        $defaultLangaugeId = $this->util->getDefaultLanguage();#
+        $defaultLanguage = $languages[$defaultLangaugeId]['language_code'];
+        
+        // article attributes (default language)
         $propertyFields = array_keys($this->util->getArticleAttributeFields());
         
         foreach($article['mainDetail']['attribute'] AS $fieldID => $value) {
@@ -504,34 +508,47 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             
             $response['properties'][] = array(
                 'field_id'      => $fieldID,
-                'language_code' => '',
+                'language_code' => $defaultLanguage,
                 'field_value'   => (string) $value,
             );
         }
+        
+        // article attributes (translations)
+        foreach($article['translations'] AS $languageId => $items)  {
+            if(!isset($languages[$languageId])) continue;
+            $languageCode = $languages[$languageId]['language_code'];
+            
+            foreach($items AS $fieldID => $value) {
+                if(!in_array($fieldID, $propertyFields)) { // not a configured article attribute field, skip
+                    continue;
+                }
+                
+                $response['properties'][] = array(
+                    'field_id' => $fieldID,
+                    'language_code' => $languageCode,
+                    'field_value' => (string) $value,
+                );
+            }
+        }
+        
         
         // article filter fields
         if(is_array($article['propertyGroup'])) { // article has a property group, extract values
             $groupedValues = array(); // values grouped by option and language
             
             $fieldValueTranslations = $this->util->translate('propertyvalue');
-            $languages = $this->util->getLanguages();
-            $defaultLanguage = $languages[$this->util->getDefaultLanguage()]['language_code'];
             
             foreach($article['propertyValues'] AS $value) {
                 $optionId = 'filter' . $value['optionId'];
                 isset($groupedValues[$optionId]) or $groupedValues[$optionId] = array();
+                isset($groupedValues[$optionId][$defaultLanguage]) or $groupedValues[$optionId][$defaultLanguage] = array();
+                $groupedValues[$optionId][$defaultLanguage][] = $value['value'];
                 
-                $language = isset($fieldValueTranslations[$value['id']]) ? $defaultLanguage : -1;
-                isset($groupedValues[$optionId][$language]) or $groupedValues[$optionId][$language] = array();
-                
-                $groupedValues[$optionId][$language][] = $value['value'];
-                
-                // actindo bugs when we supply translations for these fields
-//                if(isset($fieldValueTranslations[$value['id']])) {
-//                    foreach($fieldValueTranslations[$value['id']] AS $language => $data) {
-//                        $groupedValues[$optionId][$language][] = $data['optionValue'];
-//                    }
-//                }
+                if(isset($fieldValueTranslations[$value['id']])) {
+                    foreach($fieldValueTranslations[$value['id']] AS $language => $data) {
+                        $groupedValues[$optionId][$language][] = $data['optionValue'];
+                    }
+                }
             }
             
             foreach($groupedValues AS $optionId => $data) {
@@ -1178,6 +1195,10 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $update update array to be put into api->update()
      */
     protected function _updateProperties(&$product, &$update) {
+        $languages = $this->util->getLanguages();
+        $defaultLangaugeId = $this->util->getDefaultLanguage();
+        $defaultLanguage = $languages[$defaultLangaugeId]['language_code'];
+        
         $filterFields = $this->util->getArticleFilterFields();
         $attributeFields = $this->util->getArticleAttributeFields();
         
@@ -1194,6 +1215,10 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         }
         
         foreach($product['shop']['properties'] AS &$property) {
+            if($property['language_code'] != $defaultLanguage) {
+                continue;
+            }
+            
             // properties (filterable stuff)
             if(isset($filterFields[$property['field_id']])) {
                 if($update['filterGroupId'] > 0) {
