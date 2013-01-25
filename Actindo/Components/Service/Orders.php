@@ -313,6 +313,17 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
     }
     
     /**
+     * when an invoice is edited the shop is called with some info (status, stock, ...).
+     * this is done here
+     * 
+     * @api
+     * @param array $params 
+     */
+    public function set_status_invoice($params) {
+        return call_user_func_array(array($this, 'set_status'), $params);
+    }
+    
+    /**
      * sets the tracking code of an order
      * 
      * @api

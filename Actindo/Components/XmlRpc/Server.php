@@ -76,6 +76,7 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
      * @return Zend_XmlRpc_Response 
      */
     protected function _handle(Zend_XmlRpc_Request $request) {
+        // redirect method calls
         static $map = array(
             'customers.list' => 'customers.getList',
             'orders.list'    => 'orders.getList',
@@ -84,6 +85,14 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
         $method = $request->getMethod();
         if(isset($map[$method])) {
             $request->setMethod($map[$method]);
+        }
+        
+        // exception: orders.set_status may be called with a completely different method signature (one array param)
+        // -> map to different method
+        if($request->getMethod() == 'orders.set_status') {
+            if(count($request->getParams()) == 1) {
+                $request->setMethod('orders.set_status_invoice');
+            }
         }
         
         try {
@@ -135,8 +144,20 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
             // don't fix, this will throw an error which is probably best
         }
         else {
-            // parameter count matched, check types
-            // don't fix, throw error
+            // parameter count matched, check types, force int and string
+            $paramArray = array();
+            for($i = 0, $c = count($parameters); $i < $c; $i++) {
+                if($parameters[$i] == 'int') {
+                    $paramArray[] = (int) $params[$i];
+                }
+                elseif($parameters[$i] == 'string') {
+                    $paramArray[] = (string) $params[$i];
+                }
+                else {
+                    $paramArray[] = $params[$i];
+                }
+            }
+            $request->setParams($paramArray);
         }
         
         return $request;
