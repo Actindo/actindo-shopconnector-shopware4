@@ -1224,10 +1224,13 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 if($update['filterGroupId'] > 0) {
                     $option =& $filterFields[$property['field_id']];
 
-                    $update['propertyValues'][] = array(
-                        'option' => array('name' => $option['field_name']),
-                        'value'  => $property['field_value'],
-                    );
+                    $explodedValues = array_filter(explode('|', $property['field_value']));
+                    foreach($explodedValues AS $value) {
+                        $update['propertyValues'][] = array(
+                            'option' => array('name' => $option['field_name']),
+                            'value'  => $value,
+                        );
+                    }
                 }
             }
             // attributes (attrX)
