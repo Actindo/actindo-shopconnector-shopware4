@@ -242,7 +242,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             $item = array(
                 'art_nr'      => $position['articleNumber'],
                 'art_nr_base' => $position['articleNumber'],
-                'art_name'    => htmlspecialchars_decode($position['articleName']),
+                'art_name'    => (string) htmlspecialchars_decode($position['articleName']),
                 'preis'       => $position['price'],
                 'is_brutto'   => $order['net'] ? 0 : 1,
                 'type'        => in_array($position['mode'], array(0, 1), true) ? 'Lief' : 'NLeist',
@@ -271,13 +271,13 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
         $response[] = array(
             'art_nr'      => sprintf('SHIPPING%d', $order['dispatch']['id']),
             'art_nr_base' => sprintf('SHIPPING%d', $order['dispatch']['id']),
-            'art_name'    => $order['dispatch']['name'],
+            'art_name'    => (string) $order['dispatch']['name'],
             'preis'       => $order['net'] ? $order['invoiceShippingNet'] : $order['invoiceShipping'],
             'is_brutto'   => $order['net'] ? 0 : 1,
             'type'        => 'NLeist',
             'mwst'        => $maxTaxRate,
             'menge'       => 1,
-            'langtext'    => $order['dispatch']['description'],
+            'langtext'    => (string) $order['dispatch']['description'],
         );
         
         return $response;
