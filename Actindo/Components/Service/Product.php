@@ -958,6 +958,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $update update array to be put intp api->update()
      */
     protected function _updateCategories(&$product, &$update) {
+        is_array($product['shop']['all_categories']) or $product['shop']['all_categories'] = array();
         $categoryIDs = array_merge(array($product['swg']), $product['shop']['all_categories']);
         $categoryIDs = array_unique(array_filter(array_map('intval', $categoryIDs)));
         
