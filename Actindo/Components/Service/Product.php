@@ -1183,7 +1183,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'from'  => 1,
                 'price' => $price,
             );
-            error_log('$info: ' . $this->util->dump($info));
             
             ksort($ranges, SORT_NUMERIC);
             $ranges = array_values($ranges);
