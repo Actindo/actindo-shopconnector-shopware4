@@ -1157,18 +1157,33 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 
                 $i = (int) substr($key, 12);
                 if((int) $info['preis_range'.$i] > 0 && (int) $info['preis_gruppe'.$i] > 0) {
+                    if($this->util->findCustomerGroupTaxById($groupID)) { // import net price
+                        $price = $this->util->calculateNetPrice($info['preis_gruppe'.$i], $taxRate, $info['is_brutto']);
+                    }
+                    else { // import gross price
+                        $price = $this->util->calculateGrossPrice($info['preis_gruppe'.$i], $taxRate, $info['is_brutto']);
+                        
+                    }
                     $from = (int) $info['preis_range'.$i];
                     $ranges[$from] = array(
                         'from'  => $from,
-                        'price' => $this->util->calculateGrossPrice($info['preis_gruppe'.$i], $taxRate, $this->util->findCustomerGroupTaxById($info['is_brutto'])),
+                        'price' => $price,
                     );
                 }
             }
             // baseprice
+            if($this->util->findCustomerGroupTaxById($groupID)) { // import net price
+                $price = $this->util->calculateNetPrice($info['grundpreis'], $taxRate, $info['is_brutto']);
+            }
+            else { // import gross price
+                $price = $this->util->calculateGrossPrice($info['grundpreis'], $taxRate, $info['is_brutto']);
+                
+            }
             $ranges[1] = array(
                 'from'  => 1,
-                'price' => $this->util->calculateGrossPrice($info['grundpreis'], $taxRate, $this->util->findCustomerGroupTaxById($info['is_brutto'])),
+                'price' => $price,
             );
+            error_log('$info: ' . $this->util->dump($info));
             
             ksort($ranges, SORT_NUMERIC);
             $ranges = array_values($ranges);

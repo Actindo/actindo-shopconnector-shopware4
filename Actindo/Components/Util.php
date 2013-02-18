@@ -155,6 +155,21 @@ class Actindo_Components_Util {
     }
     
     /**
+     * takes price and tax information and returns a net price
+     * 
+     * @param float $price the price
+     * @param float $taxRate the tax rate
+     * @param boolean $isGross true if the price is gross (tax will be deducted) or false if its net (method won't do anything with the price in that case)
+     * @return type
+     */
+    public static function calculateNetPrice($price, $taxRate, $isGross) {
+        if($isGross) {
+            return $price / (1 + $taxRate / 100);
+        }
+        return (float) $price;
+    }
+    
+    /**
      * extract auth from request params (first param), validate it and write back the request parms (without the auth)
      * 
      * @param Actindo_Components_XmlRpc_Request $request 
