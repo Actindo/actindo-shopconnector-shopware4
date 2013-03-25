@@ -226,6 +226,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         
+        $unit = $this->util->getVPEs($articleMainDetails['unitId']);
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
             'all_categories'    => array(),     // is set below array definition: $this->_exportCategories()
@@ -238,7 +239,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'content'           => array(),     // is set below array definition: $this->_exportContent()
             'created'           => ($article['added'] instanceof DateTime) ? $article['added']->getTimestamp() : -1,
             'description'       => array(),     // translations, exported below array definition: $this->_exportTranslations()
-            'einheit'           => (string) $articleMainDetails['packUnit'],
+            'einheit'           => (string) $unit['description'],
+            'ek'                => 0.0,         // is set below array definition: $this->_exportPrices()
             'filtergroup_id'    => (int) $article['filterGroupId'],
             'fsk18'             => 0,           // @todo fsk18 article
             'group_permissions' => array(),     // is set below array definition: $this->_exportCustomerGroupPermissions()
@@ -463,6 +465,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $customerGroupId = (int) $price['customerGroupID'];
             isset($groupedPrices[$customerGroupId]) or $groupedPrices[$customerGroupId] = array();
             $groupedPrices[$customerGroupId][] = $price;
+            
+            $response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
         }
         
         foreach($groupedPrices AS $customerGroupId => $prices) {
