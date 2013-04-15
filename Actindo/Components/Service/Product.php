@@ -226,7 +226,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         
-        $unit = $this->util->getVPEs($articleMainDetails['unitId']);
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
             'all_categories'    => array(),     // is set below array definition: $this->_exportCategories()
@@ -239,8 +238,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'content'           => array(),     // is set below array definition: $this->_exportContent()
             'created'           => ($article['added'] instanceof DateTime) ? $article['added']->getTimestamp() : -1,
             'description'       => array(),     // translations, exported below array definition: $this->_exportTranslations()
-            'einheit'           => (string) $unit['description'],
-            'ek'                => 0.0,         // is set below array definition: $this->_exportPrices()
+            'einheit'           => (string) $articleMainDetails['packUnit'],
             'filtergroup_id'    => (int) $article['filterGroupId'],
             'fsk18'             => 0,           // @todo fsk18 article
             'group_permissions' => array(),     // is set below array definition: $this->_exportCustomerGroupPermissions()
@@ -465,8 +463,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $customerGroupId = (int) $price['customerGroupID'];
             isset($groupedPrices[$customerGroupId]) or $groupedPrices[$customerGroupId] = array();
             $groupedPrices[$customerGroupId][] = $price;
-            
-            $response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
         }
         
         foreach($groupedPrices AS $customerGroupId => $prices) {
@@ -1135,10 +1131,11 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param float $basePrice
      */
     protected function _updatePrices($prices, &$target, $taxRate, $pseudoPrices = array(), $basePrice = 0) {
+        
         $taxRate = (float) $taxRate; // @todo check for false
+        $price_old = $target['prices'];
         $target['prices'] = array();
         $basePrice = (float) $basePrice;
-        
         foreach($prices AS $groupID => $info) {
             $ranges = array(); // key = from, val = price
             
@@ -1152,7 +1149,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             else {
                 $pseudoPrice = null;
             }
-            
+            if($pseudoPrice==null){
+                
+            }
             // ranges
             foreach(array_keys($info) AS $key) {
                 if(0 !== strpos($key, 'preis_gruppe')) {
@@ -1191,6 +1190,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             ksort($ranges, SORT_NUMERIC);
             $ranges = array_values($ranges);
             for($i = 0, $c = count($ranges); $i < $c; $i++) {
+                if($pseudoPrice==null && $price_old[$i]['pseudoPrice']!=null && is_float($price_old[$i]['pseudoPrice']) && $price_old[$i]['pseudoPrice']>0){
+                    $pseudoPrice = $price_old[$i]['pseudoPrice'];
+                }
                 $price = array(
                     'customerGroupKey' => $group['groupkey'],
                     'from'  => $ranges[$i]['from'],
