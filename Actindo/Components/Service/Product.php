@@ -1149,9 +1149,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             else {
                 $pseudoPrice = null;
             }
-            if($pseudoPrice==null){
-                
-            }
             // ranges
             foreach(array_keys($info) AS $key) {
                 if(0 !== strpos($key, 'preis_gruppe')) {
