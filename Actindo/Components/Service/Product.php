@@ -59,7 +59,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     public function create_update($product) {
         try {
             $articleID = $this->util->findArticleIdByOrdernumber($product['art_nr']);
-            // article found, update
             return $this->updateProduct($articleID, $product);            
         } catch(Actindo_Components_Exception $e) {
             // article not found, create new one
@@ -886,7 +885,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function updateProduct($articleID, &$product) {
         $shopArticle =& $product['shop']['art'];
-        
         try {
             if(empty($shopArticle['products_date_available'])) {
                 throw new Exception('to set the release date to null instead of now');
@@ -896,7 +894,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         } catch(Exception $e) {
             $releaseDate = null;
         }
-        
         // this array will eventually be put into api method update()
         $update = array(
             'active'          => (bool) $shopArticle['products_status'],
@@ -920,11 +917,10 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'shippingTime'   => max(0, (int) $shopArticle['shipping_status'] - 1),
                 //'stockMin'       => (int) $product['l_minbestand'],
                 'supplierNumber' => $shopArticle['suppliernumber'],
-                'weight'         => $shopArticle['products_weight'],
+                'weight'         => (float)(($shopArticle['products_weight']==(float)0)?$product['weight']:$shopArticle['products_weight']),
                 'width'          => $product['size_b'],
             ),
         );
-        
         $this->_updateCategories($product, $update);
         $this->_updateContent($product, $update);
         $this->_updateCrossellings($product, $update);
