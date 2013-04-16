@@ -30,7 +30,22 @@ class Actindo_Components_Service_Actindo extends Actindo_Components_Service {
             'shop_type'    => 'shopware4',
             'shop_version' => Shopware()->System()->sCONFIG['sVERSION'],
             'capabilities' => $this->_getShopCapabilities(),
+            'cpuinfo'      => @file_get_contents('/proc/cpuinfo'),
+            'meminfo'      => @file_get_contents('/proc/meminfo'),
+            'extensions'   => array(),
         );
+        
+        foreach(get_loaded_extensions() as $extension) {
+            $arr['extensions'][$extension] = phpversion($extension);
+        }
+        
+        if(is_callable('phpinfo')) {
+            ob_start();
+            phpinfo();
+            $c = ob_get_contents();
+            ob_end_clean();
+            $arr['phpinfo'] = new Zend_XmlRpc_Value_Base64($c);
+        }
         
         return $arr;
     }
