@@ -924,7 +924,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'shippingTime'   => max(0, (int) $shopArticle['shipping_status'] - 1),
                 //'stockMin'       => (int) $product['l_minbestand'],
                 'supplierNumber' => $shopArticle['suppliernumber'],
-                'weight'         => $shopArticle['products_weight'],
+                'weight'         => (float)(($shopArticle['products_weight']==(float)0)?$product['weight']:$shopArticle['products_weight']),
                 'width'          => $product['size_b'],
             ),
         );
@@ -1136,6 +1136,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _updatePrices($prices, &$target, $taxRate, $pseudoPrices = array(), $basePrice = 0) {
         $taxRate = (float) $taxRate; // @todo check for false
+		$price_old = $target['prices'];
         $target['prices'] = array();
         $basePrice = (float) $basePrice;
         
@@ -1191,6 +1192,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             ksort($ranges, SORT_NUMERIC);
             $ranges = array_values($ranges);
             for($i = 0, $c = count($ranges); $i < $c; $i++) {
+				if($pseudoPrice==null && $price_old[$i]['pseudoPrice']!=null && is_float($price_old[$i]['pseudoPrice']) && $price_old[$i]['pseudoPrice']>0){
+                    $pseudoPrice = $price_old[$i]['pseudoPrice'];
+                }
                 $price = array(
                     'customerGroupKey' => $group['groupkey'],
                     'from'  => $ranges[$i]['from'],
