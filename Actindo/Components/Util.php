@@ -164,7 +164,8 @@ class Actindo_Components_Util {
      */
     public static function calculateNetPrice($price, $taxRate, $isGross) {
         if($isGross) {
-            return $price / (1 + $taxRate / 100);
+            $netto = $price / (1 + $taxRate / 100);
+            return (round($netto*100)/100);
         }
         return (float) $price;
     }
