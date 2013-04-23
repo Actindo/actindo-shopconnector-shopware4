@@ -943,7 +943,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $articles = $this->resources->article;
         $articles->update($articleID, $update);
 		
-		#Post Processing of Translations
+		#
 		if(count($postData)>0){
 			foreach($postData as $key=>$value){
 				#First Get Entry
@@ -970,7 +970,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 		}
 		
         $this->_updateVariantImages($product, $articleID);
-        
+        $this->_updateFixVariants($product,$articleID);
         return array('ok' => true, 'success' => 1);
     }
     
@@ -1397,8 +1397,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _getVariantConfiguratorSet($articleID) {
         $repository = Shopware()->Models()->Article();
-        $data = $repository->getArticleConfiguratorSetByArticleIdIndexedByIdsQuery($articleID)
-                           ->getArrayResult();
+        $data = $repository->getArticleConfiguratorSetByArticleIdIndexedByIdsQuery($articleID)->getArrayResult();
         return $data[0]['configuratorSet'];
     }
     
@@ -1595,7 +1594,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             
             $update['variants'][] = $data;
         }
-        
         if(count($activeDetailIDs)) {
             // remove orphaned variants: variants that exist in sw but need to be removed
             $where = implode(',', array_filter(array_map('intval', $activeDetailIDs)));
@@ -1924,4 +1922,36 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         return $map;
     }
+	
+    /**
+     * this protected method scans the database for remaining variant id's, if they where deleted inside of Actindo.
+	 * It delete's each variant step by step and leaves only the first variant alive.
+	 * After this it rewrites the remaining variants ordernumber and set's it to the main Articles Ordnernumber
+	 * After this the main Article is stripped of it's configuration set id (replaced by NULL)
+     * @param array $product contains the product container
+     * @param int $articleID used to get the configurator values
+     * @return void
+     */
+	protected function _updateFixVariants(&$product,&$articleID){
+		if(!is_array($product['shop']['attributes'])){
+			$sql = 'SELECT * FROM s_articles_attributes WHERE articleID = '.(int)$articleID.';';
+			$results = Shopware()->Db()->fetchAll($sql);
+			$res = \Shopware\Components\Api\Manager::getResource('Variant');
+			if(is_array($results) && count($results)>0){
+				if(count($results)>1){
+					for($i=1;$i<count($results);$i++){
+						$res->delete($results[$i]['articledetailsID']);
+					}
+				}
+				$core = 'SELECT actindo_masternumber FROM s_articles_attributes WHERE articleID='.(int)$articleID.';';
+				$r = Shopware()->Db()->fetchRow($core);
+				if($r){
+					$sql = 'UPDATE s_articles_details SET ordernumber=\''.$r['actindo_masternumber'].'\' WHERE articleID=\''.(int)$articleID.'\';';
+					Shopware()->Db()->query($sql);
+					$sql = 'UPDATE s_articles set configurator_set_id=NULL WHERE id=\''.(int)$articleID.'\';';
+					Shopware()->Db()->query($sql);
+				}
+			}
+		}
+	}
 }
