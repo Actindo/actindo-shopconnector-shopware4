@@ -59,6 +59,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     public function create_update($product) {
         try {
             $articleID = $this->util->findArticleIdByOrdernumber($product['art_nr']);
+			// article found, update
             return $this->updateProduct($articleID, $product);            
         } catch(Actindo_Components_Exception $e) {
             // article not found, create new one
@@ -224,7 +225,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $articleMainDetails =& $article['mainDetail'];
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
-        
+        $unit = $this->util->getVPEs($articleMainDetails['unitId']);
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
             'all_categories'    => array(),     // is set below array definition: $this->_exportCategories()
@@ -237,7 +238,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'content'           => array(),     // is set below array definition: $this->_exportContent()
             'created'           => ($article['added'] instanceof DateTime) ? $article['added']->getTimestamp() : -1,
             'description'       => array(),     // translations, exported below array definition: $this->_exportTranslations()
-            'einheit'           => (string) $articleMainDetails['packUnit'],
+            'einheit'           => (string) $unit['description'],
+			'ek'                => 0.0,         // is set below array definition: $this->_exportPrices(),
             'filtergroup_id'    => (int) $article['filterGroupId'],
             'fsk18'             => 0,           // @todo fsk18 article
             'group_permissions' => array(),     // is set below array definition: $this->_exportCustomerGroupPermissions()
@@ -462,6 +464,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $customerGroupId = (int) $price['customerGroupID'];
             isset($groupedPrices[$customerGroupId]) or $groupedPrices[$customerGroupId] = array();
             $groupedPrices[$customerGroupId][] = $price;
+			$response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
         }
         
         foreach($groupedPrices AS $customerGroupId => $prices) {
@@ -1300,8 +1303,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 						'value'=>$property['field_value'],
 						'field'=>$property['field_id'],
 					);
-				}
-				$update['mainDetail']['attribute'][$property['field_id']] = $property['field_value'];
+				}else
+					$update['mainDetail']['attribute'][$property['field_id']] = $property['field_value'];
             }
         }
 		return $datablock;
@@ -1332,7 +1335,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $product product array coming from actindo
      * @param array $update update array to be put intp api->update()
      */
-    protected function _updateTranslations(&$product, &$update, $attr) {
+    protected function _updateTranslations(&$product, &$update) {
         $defaultLanguageID = $this->util->getDefaultLanguage();
         
         foreach($product['shop']['desc'] AS $translation) {
