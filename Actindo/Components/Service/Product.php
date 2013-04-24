@@ -957,7 +957,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 					#If Not Create it new
 					$data = array();
 					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\',\''.serialize($data).'\',\''.(int)$articleID.'\',\''.(int)$key.'\');';
+					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\',\''.Shopware()->Db()->quote(serialize($data)).'\',\''.(int)$articleID.'\',\''.(int)$key.'\');';
 				}else{
 					#If exists, unserialize it and update it
 					$data = unserialize($result['objectdata']);
@@ -965,7 +965,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 					if(!$data)
 						$data = array();
 					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'UPDATE s_core_translations SET objectdata=\''.serialize($data).'\' WHERE id='.(int)$result['id'].';';
+					$sql = 'UPDATE s_core_translations SET objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$result['id'].';';
 				}
 				#Update DB Data
 				Shopware()->Db()->query($sql);
@@ -1273,14 +1273,14 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 							if(!$data) $data = array('optionValue'=>'');
 							if($data['optionValue']!=$property['field_value']){
 								$data['optionValue'] = $property['field_value'];
-								$sql = 'UPDATE s_core_translations set objectdata=\''.serialize($data).'\' WHERE id='.(int)$work['id'].';';
+								$sql = 'UPDATE s_core_translations set objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$work['id'].';';
 								Shopware()->Db()->query($sql);
 							}
 						}else{
 							$sql = 'INSERT INTO s_core_translations 
 								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`) 
 								VALUES
-								(\'\',\'propertyvalue\',\''.serialize(array('optionValue'=>$property['field_value'])).'\','.(int)$result.','.(int)$property['language_id'].');';
+								(\'\',\'propertyvalue\',\''.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).'\','.(int)$result.','.(int)$property['language_id'].');';
 							Shopware()->Db()->query($sql);
 						}
 					}else{
