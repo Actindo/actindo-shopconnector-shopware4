@@ -59,7 +59,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     public function create_update($product) {
         try {
             $articleID = $this->util->findArticleIdByOrdernumber($product['art_nr']);
-            // article found, update
+			// article found, update
             return $this->updateProduct($articleID, $product);            
         } catch(Actindo_Components_Exception $e) {
             // article not found, create new one
@@ -225,7 +225,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $articleMainDetails =& $article['mainDetail'];
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
-        
         $unit = $this->util->getVPEs($articleMainDetails['unitId']);
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
@@ -240,7 +239,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'created'           => ($article['added'] instanceof DateTime) ? $article['added']->getTimestamp() : -1,
             'description'       => array(),     // translations, exported below array definition: $this->_exportTranslations()
             'einheit'           => (string) $unit['description'],
-            'ek'                => 0.0,         // is set below array definition: $this->_exportPrices()
+			'ek'                => 0.0,         // is set below array definition: $this->_exportPrices(),
             'filtergroup_id'    => (int) $article['filterGroupId'],
             'fsk18'             => 0,           // @todo fsk18 article
             'group_permissions' => array(),     // is set below array definition: $this->_exportCustomerGroupPermissions()
@@ -465,8 +464,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $customerGroupId = (int) $price['customerGroupID'];
             isset($groupedPrices[$customerGroupId]) or $groupedPrices[$customerGroupId] = array();
             $groupedPrices[$customerGroupId][] = $price;
-            
-            $response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
+			$response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
         }
         
         foreach($groupedPrices AS $customerGroupId => $prices) {
@@ -890,7 +888,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function updateProduct($articleID, &$product) {
         $shopArticle =& $product['shop']['art'];
-        
         try {
             if(empty($shopArticle['products_date_available'])) {
                 throw new Exception('to set the release date to null instead of now');
@@ -900,7 +897,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         } catch(Exception $e) {
             $releaseDate = null;
         }
-        
         // this array will eventually be put into api method update()
         $update = array(
             'active'          => (bool) $shopArticle['products_status'],
@@ -928,13 +924,13 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'width'          => $product['size_b'],
             ),
         );
-        
         $this->_updateCategories($product, $update);
         $this->_updateContent($product, $update);
         $this->_updateCrossellings($product, $update);
         $this->_updateCustomerGroupPermissions($product, $update);
         $this->_updateImages($product['shop']['images'], $update, $articleID);
-        $this->_updateProperties($product, $update);
+		#return contains data for post processing
+        $postData = $this->_updateProperties($product, $update);
         $this->_updateTax($product, $update);
         $this->_updatePrices( // _updateTax() must run before this!
             $product['preisgruppen'],
@@ -949,9 +945,35 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $articles = $this->resources->article;
         $articles->update($articleID, $update);
-        
+		
+		#
+		if(count($postData)>0){
+			foreach($postData as $key=>$value){
+				#First Get Entry
+				$sql = 'SELECT * FROM s_core_translations WHERE objecttype=\'article\' and objectkey=\''.(int)$articleID.'\' and objectlanguage='.(int)$key.';';
+				$result = Shopware()->Db()->fetchRow($sql);
+				#Check if result exists
+				if(!$result){
+					#If Not Create it new
+					$data = array();
+					foreach($value as $key) $data[$key['field']] = $key['value'];
+					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\',\''.Shopware()->Db()->quote(serialize($data)).'\',\''.(int)$articleID.'\',\''.(int)$key.'\');';
+				}else{
+					#If exists, unserialize it and update it
+					$data = unserialize($result['objectdata']);
+					#Data can't bea read, so reinialize it
+					if(!$data)
+						$data = array();
+					foreach($value as $key) $data[$key['field']] = $key['value'];
+					$sql = 'UPDATE s_core_translations SET objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$result['id'].';';
+				}
+				#Update DB Data
+				Shopware()->Db()->query($sql);
+			}
+		}
+		
         $this->_updateVariantImages($product, $articleID);
-        
+        $this->_updateFixVariants($product,$articleID);
         return array('ok' => true, 'success' => 1);
     }
     
@@ -1135,11 +1157,11 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param float $basePrice
      */
     protected function _updatePrices($prices, &$target, $taxRate, $pseudoPrices = array(), $basePrice = 0) {
+        
         $taxRate = (float) $taxRate; // @todo check for false
-		$price_old = $target['prices'];
+        $price_old = $target['prices'];
         $target['prices'] = array();
         $basePrice = (float) $basePrice;
-        
         foreach($prices AS $groupID => $info) {
             $ranges = array(); // key = from, val = price
             
@@ -1153,7 +1175,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             else {
                 $pseudoPrice = null;
             }
-            
             // ranges
             foreach(array_keys($info) AS $key) {
                 if(0 !== strpos($key, 'preis_gruppe')) {
@@ -1192,7 +1213,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             ksort($ranges, SORT_NUMERIC);
             $ranges = array_values($ranges);
             for($i = 0, $c = count($ranges); $i < $c; $i++) {
-				if($pseudoPrice==null && $price_old[$i]['pseudoPrice']!=null && is_float($price_old[$i]['pseudoPrice']) && $price_old[$i]['pseudoPrice']>0){
+                if($pseudoPrice==null && $price_old[$i]['pseudoPrice']!=null && is_float($price_old[$i]['pseudoPrice']) && $price_old[$i]['pseudoPrice']>0){
                     $pseudoPrice = $price_old[$i]['pseudoPrice'];
                 }
                 $price = array(
@@ -1216,6 +1237,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @see Actindo_Components_Service_Product::_updateVariantDetailProperties()
      * @param array $product product array coming from actindo
      * @param array $update update array to be put into api->update()
+	 * @return array Array containing translation updates
      */
     protected function _updateProperties(&$product, &$update) {
         $languages = $this->util->getLanguages();
@@ -1230,39 +1252,63 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $update['propertyValues'] = array();
         
         $update['mainDetail']['attribute'] = array();
-        
         if($update['filterGroupId'] > 0) {
             $update['propertyGroup'] = array('id' => $update['filterGroupId']);
         } else {
             $update['propertyGroup'] = null;
         }
-        
+		$datablock = array();
         foreach($product['shop']['properties'] AS &$property) {
-            if($property['language_code'] != $defaultLanguage) {
-                continue;
-            }
-            
             // properties (filterable stuff)
             if(isset($filterFields[$property['field_id']])) {
                 if($update['filterGroupId'] > 0) {
-                    $option =& $filterFields[$property['field_id']];
-
-                    $explodedValues = array_filter(explode('|', $property['field_value']));
-                    foreach($explodedValues AS $value) {
-                        $update['propertyValues'][] = array(
-                            'option' => array('name' => $option['field_name']),
-                            'value'  => $value,
-                        );
-                    }
+					if($property['language_code']!=$defaultLanguage){
+						$id = (int)str_replace('filter','',$property['field_id']);
+						$sql = 'SELECT id FROM s_filter_values WHERE value=\''.$value.'\';';
+						$result = Shopware()->Db()->fetchOne($sql);
+						$sql = 'SELECT * FROM s_core_translations WHERE objecttype=\'propertyvalue\' and objectkey='.(int)$result.' and objectlanguage='.(int)$property['language_id'].';';
+						$work = Shopware()->Db()->fetchRow($sql);
+						if($work!==false){
+							$data = unserialize($work['objectdata']);
+							if(!$data) $data = array('optionValue'=>'');
+							if($data['optionValue']!=$property['field_value']){
+								$data['optionValue'] = $property['field_value'];
+								$sql = 'UPDATE s_core_translations set objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$work['id'].';';
+								Shopware()->Db()->query($sql);
+							}
+						}else{
+							$sql = 'INSERT INTO s_core_translations 
+								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`) 
+								VALUES
+								(\'\',\'propertyvalue\',\''.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).'\','.(int)$result.','.(int)$property['language_id'].');';
+							Shopware()->Db()->query($sql);
+						}
+					}else{
+						$option =& $filterFields[$property['field_id']];
+						$explodedValues = array_filter(explode('|', $property['field_value']));
+						foreach($explodedValues AS $value) {
+							$update['propertyValues'][] = array(
+								'option' => array('name' => $option['field_name']),
+								'value'  => $value,
+							);
+						}
+					}
                 }
             }
             // attributes (attrX)
+			#Skip Translation for the Beginning.
             elseif(isset($attributeFields[$property['field_id']])) {
-                $update['mainDetail']['attribute'][$property['field_id']] = $property['field_value'];
+				if($property['language_code'] != $defaultLanguage){
+					$datablock[$property['language_id']][] = array(
+						'value'=>$property['field_value'],
+						'field'=>$property['field_id'],
+					);
+				}else
+					$update['mainDetail']['attribute'][$property['field_id']] = $property['field_value'];
             }
         }
+		return $datablock;
     }
-    
     /**
      * sets the correct tax class
      * 
@@ -1354,8 +1400,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _getVariantConfiguratorSet($articleID) {
         $repository = Shopware()->Models()->Article();
-        $data = $repository->getArticleConfiguratorSetByArticleIdIndexedByIdsQuery($articleID)
-                           ->getArrayResult();
+        $data = $repository->getArticleConfiguratorSetByArticleIdIndexedByIdsQuery($articleID)->getArrayResult();
         return $data[0]['configuratorSet'];
     }
     
@@ -1552,7 +1597,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             
             $update['variants'][] = $data;
         }
-        
         if(count($activeDetailIDs)) {
             // remove orphaned variants: variants that exist in sw but need to be removed
             $where = implode(',', array_filter(array_map('intval', $activeDetailIDs)));
@@ -1881,4 +1925,36 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         return $map;
     }
+	
+    /**
+     * this protected method scans the database for remaining variant id's, if they where deleted inside of Actindo.
+	 * It delete's each variant step by step and leaves only the first variant alive.
+	 * After this it rewrites the remaining variants ordernumber and set's it to the main Articles Ordnernumber
+	 * After this the main Article is stripped of it's configuration set id (replaced by NULL)
+     * @param array $product contains the product container
+     * @param int $articleID used to get the configurator values
+     * @return void
+     */
+	protected function _updateFixVariants(&$product,&$articleID){
+		if(!is_array($product['shop']['attributes'])){
+			$sql = 'SELECT * FROM s_articles_attributes WHERE articleID = '.(int)$articleID.';';
+			$results = Shopware()->Db()->fetchAll($sql);
+			$res = \Shopware\Components\Api\Manager::getResource('Variant');
+			if(is_array($results) && count($results)>0){
+				if(count($results)>1){
+					for($i=1;$i<count($results);$i++){
+						$res->delete($results[$i]['articledetailsID']);
+					}
+				}
+				$core = 'SELECT actindo_masternumber FROM s_articles_attributes WHERE articleID='.(int)$articleID.';';
+				$r = Shopware()->Db()->fetchRow($core);
+				if($r){
+					$sql = 'UPDATE s_articles_details SET ordernumber=\''.$r['actindo_masternumber'].'\' WHERE articleID=\''.(int)$articleID.'\';';
+					Shopware()->Db()->query($sql);
+					$sql = 'UPDATE s_articles set configurator_set_id=NULL WHERE id=\''.(int)$articleID.'\';';
+					Shopware()->Db()->query($sql);
+				}
+			}
+		}
+	}
 }
