@@ -909,6 +909,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'pseudoSales'     => (int) $shopArticle['pseudosales'],
             'releaseDate'     => $releaseDate,
             'supplierId'      => (int) $shopArticle['manufacturers_id'],
+            #Ticket 91131
+            'notification'    => (int) $shopArticle['email_notification'],
             'mainDetail'      => array(
                 'ean'            => $product['ean'],
                 'height'         => $product['size_h'],
