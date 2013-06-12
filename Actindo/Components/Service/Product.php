@@ -1787,13 +1787,17 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         }
         
         // s_article_configurator_option_relations
-        foreach($details['attribute_value_id'] AS $option) {
-            Shopware()->Db()->insert('s_article_configurator_option_relations', array(
-                'article_id' => $detailID,
-                'option_id'  => $mapping['options'][$option],
-            ));
-        }
-        
+		#ticket: #88084 added an additional try catch block to prevent blocking upload of variants (article id already exists etc.)
+		try{
+			foreach($details['attribute_value_id'] AS $option) {
+				Shopware()->Db()->insert('s_article_configurator_option_relations', array(
+					'article_id' => $detailID,
+					'option_id'  => $mapping['options'][$option],
+				));
+			}
+		}catch(Exception $e){
+		
+		}
         return $detailID;
     }
     
