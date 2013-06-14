@@ -464,7 +464,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $customerGroupId = (int) $price['customerGroupID'];
             isset($groupedPrices[$customerGroupId]) or $groupedPrices[$customerGroupId] = array();
             $groupedPrices[$customerGroupId][] = $price;
-			$response['ek'] = max($response['ek'], (float) $price['baseprice']); // einkaufspreis
+			#bug fix
+			$response['ek'] = max((float)$response['ek'], (float) $price['baseprice']); // einkaufspreis
         }
         
         foreach($groupedPrices AS $customerGroupId => $prices) {
@@ -909,6 +910,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'pseudoSales'     => (int) $shopArticle['pseudosales'],
             'releaseDate'     => $releaseDate,
             'supplierId'      => (int) $shopArticle['manufacturers_id'],
+            #Ticket 91131
+            'notification'    => (int) $shopArticle['email_notification'],
             'mainDetail'      => array(
                 'ean'            => $product['ean'],
                 'height'         => $product['size_h'],
@@ -957,7 +960,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 					#If Not Create it new
 					$data = array();
 					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\',\''.Shopware()->Db()->quote(serialize($data)).'\',\''.(int)$articleID.'\',\''.(int)$key.'\');';
+					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\','.Shopware()->Db()->quote(serialize($data)).',\''.(int)$articleID.'\',\''.(int)$key.'\');';
 				}else{
 					#If exists, unserialize it and update it
 					$data = unserialize($result['objectdata']);
@@ -1280,7 +1283,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 							$sql = 'INSERT INTO s_core_translations 
 								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`) 
 								VALUES
-								(\'\',\'propertyvalue\',\''.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).'\','.(int)$result.','.(int)$property['language_id'].');';
+								(\'\',\'propertyvalue\','.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).','.(int)$result.','.(int)$property['language_id'].');';
 							Shopware()->Db()->query($sql);
 						}
 					}else{
@@ -1785,13 +1788,17 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         }
         
         // s_article_configurator_option_relations
-        foreach($details['attribute_value_id'] AS $option) {
-            Shopware()->Db()->insert('s_article_configurator_option_relations', array(
-                'article_id' => $detailID,
-                'option_id'  => $mapping['options'][$option],
-            ));
-        }
-        
+		#ticket: #88084 added an additional try catch block to prevent blocking upload of variants (article id already exists etc.)
+			foreach($details['attribute_value_id'] AS $option) {
+				try{
+					Shopware()->Db()->insert('s_article_configurator_option_relations', array(
+						'article_id' => $detailID,
+						'option_id'  => $mapping['options'][$option],
+					));
+				}catch(Exception $e){
+				
+				}
+			}
         return $detailID;
     }
     
@@ -1948,7 +1955,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 				}
 				$core = 'SELECT actindo_masternumber FROM s_articles_attributes WHERE articleID='.(int)$articleID.';';
 				$r = Shopware()->Db()->fetchRow($core);
-				if($r){
+				#ticket #93431
+				if($r && $r["actindo_masternumber"]!==null){
 					$sql = 'UPDATE s_articles_details SET ordernumber=\''.$r['actindo_masternumber'].'\' WHERE articleID=\''.(int)$articleID.'\';';
 					Shopware()->Db()->query($sql);
 					$sql = 'UPDATE s_articles set configurator_set_id=NULL WHERE id=\''.(int)$articleID.'\';';
