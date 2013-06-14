@@ -960,7 +960,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 					#If Not Create it new
 					$data = array();
 					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\',\''.Shopware()->Db()->quote(serialize($data)).'\',\''.(int)$articleID.'\',\''.(int)$key.'\');';
+					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\','.Shopware()->Db()->quote(serialize($data)).',\''.(int)$articleID.'\',\''.(int)$key.'\');';
 				}else{
 					#If exists, unserialize it and update it
 					$data = unserialize($result['objectdata']);
@@ -1283,7 +1283,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 							$sql = 'INSERT INTO s_core_translations 
 								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`) 
 								VALUES
-								(\'\',\'propertyvalue\',\''.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).'\','.(int)$result.','.(int)$property['language_id'].');';
+								(\'\',\'propertyvalue\','.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).','.(int)$result.','.(int)$property['language_id'].');';
 							Shopware()->Db()->query($sql);
 						}
 					}else{
