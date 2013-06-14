@@ -65,14 +65,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
             case 'append':
             case 'above':
             case 'below':
-				if($referenceID > 0){
-					$target = $referenceID;
-					$work=false;
-				}else{
-					$target = $parentID;
-					$work = true;
-				}
-                return $this->categoryMove($action, $categoryID, $target,$work);
+                return $this->categoryMove($action, $categoryID, ((strtolower($action)!=='append')?$referenceID:$parentID));
 			break;
             default:
                 throw new Actindo_Components_Exception(sprintf('Unknown category action given: %s', $action));
@@ -183,7 +176,6 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
         }
         return array('ok' => true);
     }
-    
     /**
      * moves a category within the category tree
      * 
@@ -191,90 +183,81 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @param string $position type of movement: above/below/append
      * @param int $categoryID the category id to be moved
      * @param int $referenceID reference category id to move above/below/append
-	 * @
      */
-    protected function categoryMove($position, $categoryID, $referenceID,$workaround=false) {
-		if(!$category = $this->getRepository()->find($categoryID)) {
-            throw new Actindo_Components_Exception('Could not find the category to be moved');
+    protected function categoryMove($position, $categoryID, $referenceID) {
+        $repository = $this->getRepository();
+        list($index,$parent,$category,$previousid) = $this->getNewPositionIndex($categoryID,$position,$referenceID);
+        if($position!=='append'){
+            if($index===0){
+                $category->setPosition(0);
+                if((int)$category->getParentId()!==(int)$parent->getId())
+                    $category->setParent($parent);
+                $repository->persistAsFirstChildOf($category, $parent);
+            }else{
+                $previous = $this->getRepository()->find($previousid);
+                $category->setPosition($index);
+                $repository->persistAsNextSiblingOf($category, $previous);
+            }
+        }else{
+            $parent = $this->getRepository()->find($referenceID);
+            $category->setParent($parent);
+            $repository->persistAsLastChildOf($category, $parent);
         }
-        if($workaround){
-			$parent = $this->getRepository()->find($referenceID);
-			$newPosition = 0;
-		}else{
-			if(!$reference = $this->getRepository()->find($referenceID)) {
-				// parent did not change
-				$parent = $this->getRepository()->find($category->getId());
-				$newPosition = 1;
-			} else {
-				$parent = $reference->getParent();
-				if($position == 'append') {
-					$newPosition = 1 + (int) Shopware()->Models()->getQueryCount(
-						$this->getRepository()->getListQuery(array(
-							array(
-								'property' => 'c.parentId',
-								'value' => $parent->getId(),
-							)),
-							array(),
-							null,
-							null,
-							false
-						)
-					);
-				} else {
-					$newPosition = 1 + (int) $reference->getPosition();
-				}
-			}
-		}
-        Actindo_Components_Util::dumpToFile('sort1.dump',$categoryID);
-        $category->setParent($parent);
-		$parentid = $parent->getId();
         Shopware()->Models()->flush();
-        $childCategories = $this->getRepository()->childrenQuery($parent, true, 'position');
-        $this->moveCategoryItem($categoryID,$parentid,$newPosition,$childCategories->getArrayResult());
-        try {
-            $this->getRepository()->reorder($category->getParent(), 'position');
-        } catch(Gedmo\Exception\InvalidArgumentException $e) {
-            // Node is not managed by UnitOfWork
-        }
         return array('ok' => true);
     }
+    
     /**
-     * helper method to move the category item to the right position
-     *
-     * @see Shopware_Controllers_Backend_Category::moveCategoryItem()
-     * @param int $moveItemId
-	 * @param $parentId Parent Id of move Object
-     * @param int $newPosition
-     * @param array $cCA category child array
-	 * @return void
+     * gets the index of the new position
+     * @param $moveItemId ID of the item to be moved
+     * @param $positiontype type of moving (above/below/append)
+     * @param $position id of the element, where it should be placed bevor/after null if append
+     * @param $parentid ID of the Parent Object
+     * @return array index where the new object should be placed and parentid
      */
-    protected function moveCategoryItem($moveItemId,$parentId,$position,$cCA){
-		$prev = null;
-		$found = false;
-        $repository = $this->getRepository();
-		$item = $this->getRepository()->find($moveItemId);
-		if($position>0){
-			foreach($cCA as $key){
-				if($prev==null){
-					$prev = $key['id'];
-				}elseif($key['id'] == $moveItemId){
-					$found=true;
-					break;
-				}else{
-					$prev = $key['id'];
-				}
-			}
-			$item->setPosition($position);
-		}else{
-			$item->setPosition(0);
-		}
-		if($found){
-			$previous = $this->getRepository()->find($prev);
-			$repository->persistAsNextSiblingOf($item, $previous);
-		}else{ 
-			$parent = $this->getRepository()->find($parentId);
-            $repository->persistAsFirstChildOf($item, $parent);
-		}
-		Shopware()->Models()->flush();
-	}
+    protected function getNewPositionIndex($moveItemId,$positiontype,$referenceID){
+        $category = $this->getRepository()->find($moveItemId);
+    	if(!$category) {
+           throw new Actindo_Components_Exception('Could not find the category to be moved');
+        }
+        if(!$reference = $this->getRepository()->find($referenceID)) {
+            $parent = $this->getRepository()->find($category->getId());
+        }else{
+            $parent = $reference->getParent();
+        }
+        $childCategories = $this->getRepository()->childrenQuery($parent, true, 'position');
+        $children = $childCategories->getArrayResult();
+        if($positiontype==='append'){
+            $position = count($children);
+            foreach($children as $key=>$value){
+                if((int)$value['id']==(int)$moveItemId)
+                    $position--;
+            }
+        }else{
+            usort($children,'actindo_compareSort');
+            foreach($children as $key=>$value){
+                if((int)$value['id']==(int)$referenceID){
+                    $position = $key;
+                    if($positiontype === 'above'){
+                        $previous = $children[$position];
+                    }else{
+                        $previous = $value['id'];
+                    }
+                }
+            }
+            if($position===0){
+                $position = 1;
+                $previous = $children[0]['id'];
+            }
+            if($position===null){
+                $position=0;
+                $previous=null;
+            }
+        }
+        return array($position,$parent,$category,$previous);
+    }
+}
+
+function actindo_compareSort($a,$b){
+    return ($a['left']<$b['left'])?-1:1;
 }
