@@ -968,7 +968,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 					if(!$data)
 						$data = array();
 					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'UPDATE s_core_translations SET objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$result['id'].';';
+					$sql = 'UPDATE s_core_translations SET objectdata='.Shopware()->Db()->quote(serialize($data)).' WHERE id='.(int)$result['id'].';';
 				}
 				#Update DB Data
 				Shopware()->Db()->query($sql);
@@ -1015,7 +1015,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     'target' => $content['content_link_target'],
                 );
             }
-            // attach file to article (download)
+            /*// attach file to article (download)
             elseif($content['type'] == 'file') {
                 if(substr($content['content_file_type'], -3) == 'pdf') {
                     $filetype = 'pdf';
@@ -1041,7 +1041,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 else {
                     // do nothing for now, failed file attachment doesn't justify canceling the whole operation
                 }
-            }
+            }*/
         }
     }
     
