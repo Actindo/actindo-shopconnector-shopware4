@@ -65,7 +65,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
             case 'append':
             case 'above':
             case 'below':
-                return $this->categoryMove($action, $categoryID, ((strtolower($action)!=='append')?$referenceID:$parentID));
+                return $this->categoryMove($action, $categoryID, ((strtolower($action)!=='append')?$referenceID:$parentID),$parentID);
 			break;
             default:
                 throw new Actindo_Components_Exception(sprintf('Unknown category action given: %s', $action));
@@ -184,14 +184,21 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @param int $categoryID the category id to be moved
      * @param int $referenceID reference category id to move above/below/append
      */
-    protected function categoryMove($position, $categoryID, $referenceID) {
+    protected function categoryMove($position, $categoryID, $referenceID,$parid) {
         $repository = $this->getRepository();
         list($index,$parent,$category,$previousid) = $this->getNewPositionIndex($categoryID,$position,$referenceID);
         if($position!=='append'){
             if($index===0){
                 $category->setPosition(0);
-                if((int)$category->getParentId()!==(int)$parent->getId())
-                    $category->setParent($parent);
+                if((int)$category->getParentId()!==(int)$parent->getId()){
+                        if($parent->getId()==$categoryID && (int)$parid>0){
+                            $par = (int)$parid;
+                            $parent = $this->getRepository()->find((int)$parid);
+                        }else{
+                            $par = $parent->getId();
+                        }
+                    $category->setParent($par);
+                }
                 $repository->persistAsFirstChildOf($category, $parent);
             }else{
                 $previous = $this->getRepository()->find($previousid);
