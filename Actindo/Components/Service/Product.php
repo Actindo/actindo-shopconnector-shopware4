@@ -1276,7 +1276,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 							if(!$data) $data = array('optionValue'=>'');
 							if($data['optionValue']!=$property['field_value']){
 								$data['optionValue'] = $property['field_value'];
-								$sql = 'UPDATE s_core_translations set objectdata=\''.Shopware()->Db()->quote(serialize($data)).'\' WHERE id='.(int)$work['id'].';';
+								$sql = 'UPDATE s_core_translations set objectdata='.Shopware()->Db()->quote(serialize($data)).' WHERE id='.(int)$work['id'].';';
 								Shopware()->Db()->query($sql);
 							}
 						}else{
