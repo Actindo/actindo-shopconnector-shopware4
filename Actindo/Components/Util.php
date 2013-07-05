@@ -182,19 +182,25 @@ class Actindo_Components_Util {
         $auth = array_shift($params);
         
         list($hash, $username) = explode('|||', $auth, 2);
-        $result = Shopware()->Db()->fetchRow('SELECT `active`, `apiKey` FROM `s_core_auth` WHERE `password` = ? AND `username` = ?', array($hash, $username));
+        $result = Shopware()->Db()->fetchRow('SELECT `active`, `apiKey`, `password` FROM `s_core_auth` WHERE `username` = ?', array($username));
         if(!$result) {
-            throw new Actindo_Components_Exception('Ungültiger Benutzername oder Passwort');
+            throw new Actindo_Components_Exception('Ungültiger Benutzername');
         }
-        elseif(empty($result['active'])) {
-            $msg = sprintf('Der Benutzer `%s` ist nicht aktiviert. Bitte im Shop-Backend unter Einstellungen > Benutzerverwaltung > %s [editieren] aktivieren.', $username, $username);
-            throw new Actindo_Components_Exception($msg);
-        }
-        elseif(empty($result['apiKey'])) {
+		if(empty($result['apiKey'])) {
             $msg = sprintf('Der API-Zugang ist für diesen Benutzer nicht aktiviert. Bitte im Shop-Backend unter Einstellungen > Benutzerverwaltung > %s [editieren] > API-Zugang aktivieren.', $username);
             throw new Actindo_Components_Exception($msg);
         }
-        
+		if(empty($result['active'])) {
+            $msg = sprintf('Der Benutzer `%s` ist nicht aktiviert. Bitte im Shop-Backend unter Einstellungen > Benutzerverwaltung > %s [editieren] aktivieren.', $username, $username);
+            throw new Actindo_Components_Exception($msg);
+        }
+		$apikey = md5( 'A9ASD:_AD!_=%a8nx0asssblPlasS$' . md5($result['apiKey']));
+		/**
+		 * Test Password Login
+		 */
+		if($result['password']!==$hash && $apikey!==$hash){
+			throw new Actindo_Components_Exception('Passwort oder API-Key (Shopware 4.1) ungültig!');
+		}
         $request->setParams($params);
         return $request;
     }
@@ -1083,4 +1089,15 @@ class Actindo_Components_Util {
         }
         return $out;
     }
+}
+
+/**
+ * actindo_compareSort
+ * compare sort function
+ * @par $a first value
+ * @par $b second value
+ * @return bool
+ */
+function actindo_compareSort($a,$b){
+    return ($a['left']<$b['left'])?-1:1;
 }
