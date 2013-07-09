@@ -183,37 +183,137 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @param string $position type of movement: above/below/append
      * @param int $categoryID the category id to be moved
      * @param int $referenceID reference category id to move above/below/append
+	 * @param int $parid is the original parent id handed down by the actindo API. This value might be 0 if it not has been submited (might happend under certain circumstances)
+	 * @throws Actindo_Components_Exception if Category is not found or Parent ID not found
+	 * @return array with element ok (value=true)
      */
     protected function categoryMove($position, $categoryID, $referenceID,$parid) {
-        $repository = $this->getRepository();
-        list($index,$parent,$category,$previousid) = $this->getNewPositionIndex($categoryID,$position,$referenceID);
-        if($position!=='append'){
-            if($index===0){
-                $category->setPosition(0);
-                if((int)$category->getParentId()!==(int)$parent->getId()){
-                        if($parent->getId()==$categoryID && (int)$parid>0){
-                            $par = (int)$parid;
-                            $parent = $this->getRepository()->find((int)$parid);
-                        }else{
-                            $par = $parent->getId();
-                        }
-                    $category->setParent($par);
-                }
-                $repository->persistAsFirstChildOf($category, $parent);
-            }else{
-                $previous = $this->getRepository()->find($previousid);
-                $category->setPosition($index);
-                $repository->persistAsNextSiblingOf($category, $previous);
-            }
-        }else{
-            $parent = $this->getRepository()->find($referenceID);
-            $category->setParent($parent);
-            $repository->persistAsLastChildOf($category, $parent);
-        }
-        Shopware()->Models()->flush();
+		$repository = $this->getRepository();
+		if(version_compare(Shopware()->Config()->sVERSION, '4.1', '>=')){
+			/** @var $item \Shopware\Models\Category\Category */
+			$item = $repository->find((int)$categoryID);
+			if($item===null){
+				throw new Actindo_Components_Exception('Category was not found!');
+			}
+			/** @var $item \Shopware\Models\Category\Category */
+			$parent = $repository->find((int)$parid);
+			if($parent===null){
+				throw new Actindo_Components_Exception('Parent Category was not found!');
+			}
+			$needsRebuild = false;
+			if ($item->getParent()->getId() != $parent->getId()) {
+				$item->setParent($parent);
+				$parents = $this->getCategoryComponent()->getParentCategoryIds($parentId);
+				$path = implode('|', $parents);
+				if (empty($path)) {
+					$path = null;
+				} else {
+					$path = '|' . $path . '|';
+				}
+				$item->internalSetPath($path);
+				$batchModeEnabled = Shopware()->Config()->get('moveBatchModeEnabled');
+				if ($item->isLeaf() || !$batchModeEnabled) {
+					$needsRebuild = false;
+				} else {
+					Shopware()->CategorySubscriber()->disableForNextFlush();
+					$needsRebuild = true;
+				}
+				if($position==='append'){
+					/** @var $item \Shopware\Models\Category\Category */
+					$category = $repository->find((int)$parent->getId());
+					$children = $category->getChildren();
+					$item->setPosition(count($children));
+				}else{
+					$this->rebuildOrder($parid,$categoryID,$position,$referenceID);
+				}
+			}else{
+				$this->rebuildOrder($parid,$categoryID,$position,$referenceID);
+				$needsRebuild = true;
+			}
+			Shopware()->Models()->flush($item);
+		}else{
+			list($index,$parent,$category,$previousid) = $this->getNewPositionIndex($categoryID,$position,$referenceID);
+			if($position!=='append'){
+				if($index===0){
+					$category->setPosition(0);
+					if((int)$category->getParentId()!==(int)$parent->getId()){
+							if($parent->getId()==$categoryID && (int)$parid>0){
+								$par = (int)$parid;
+								$parent = $this->getRepository()->find((int)$parid);
+							}else{
+								$par = $parent->getId();
+							}
+						$category->setParent($par);
+					}
+					$repository->persistAsFirstChildOf($category, $parent);
+				}else{
+					$previous = $this->getRepository()->find($previousid);
+					$category->setPosition($index);
+					$repository->persistAsNextSiblingOf($category, $previous);
+				}
+			}else{
+				$parent = $this->getRepository()->find($referenceID);
+				$category->setParent($parent);
+				$repository->persistAsLastChildOf($category, $parent);
+			}
+			Shopware()->Models()->flush();
+		}
         return array('ok' => true);
     }
-    
+    /**
+     * @return \Shopware\Components\Model\CategoryDenormalization
+     */
+    protected function getCategoryComponent(){
+		return Shopware()->CategoryDenormalization();
+    }
+	/**
+	 * rebuildOrder
+	 * @param $parentid int Parent id
+	 * @param $itemid int item id to be moved
+	 * @param $position string position (above, below, append)
+	 * @param $referenceid position where to move it after or before
+	 *
+	 */
+	protected function rebuildOrder($parentid,$itemid,$position,$referenceid){
+		$repository = $this->getRepository();
+		/** @var $item \Shopware\Models\Category\Category */
+		$category = $repository->find((int)$parentid);
+		$children = $category->getChildren();
+		if($position==='append'){
+			/** @var $item \Shopware\Models\Category\Category */
+			$item = $repository->find((int)$itemid);
+			$item->setPosition(count($children));
+		}else{
+			$check = false;
+			$i=0;
+			$itempos=count($children);
+			foreach($children as $key=>$value){
+				#Reference is 0 so it is the first element!
+				if($referenceid==0){
+					$itempos = 0;
+					$i++;
+					$check=true;
+				}
+				if($value->getId()===(int)$referenceid){
+					$i=$key+1;
+					$check = true;
+					if($position=='below'){
+						$itempos = $key+1;
+					}else{
+						$itempos = $key+1;
+					}
+				}
+				if($check && $value->getId()!==(int)$itemid){
+					$value->setPosition($i);
+					$i++;
+				}
+				if($value->getId()===(int)$itemid){
+					$value->setPosition($itempos);
+				}
+			}
+		}
+		Shopware()->Models()->flush();
+	}
     /**
      * gets the index of the new position
      * @param $moveItemId ID of the item to be moved
@@ -263,8 +363,4 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
         }
         return array($position,$parent,$category,$previous);
     }
-}
-
-function actindo_compareSort($a,$b){
-    return ($a['left']<$b['left'])?-1:1;
 }
