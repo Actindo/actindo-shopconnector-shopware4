@@ -1128,6 +1128,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             //$i = 0;
             foreach(array_keys($images) AS $key) {
                 $image =& $images[$key];
+				$image['image_name'] = $articleID.'-'.$i.'.'.$image['image_name'];
+				$i++;
                 $path = $this->util->writeTemporaryFile($image['image_name'], $image['image']);
                 
                 $description = '';
@@ -1185,7 +1187,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 }
                 
                 $i = (int) substr($key, 12);
-                if((int) $info['preis_range'.$i] > 0 && (int) $info['preis_gruppe'.$i] > 0) {
+                if((float) $info['preis_range'.$i] > (float)0 && (float) $info['preis_gruppe'.$i] > (float)0) {
                     if($this->util->findCustomerGroupTaxById($groupID)) { // import net price
                         $price = $this->util->calculateNetPrice($info['preis_gruppe'.$i], $taxRate, $info['is_brutto']);
                     }
