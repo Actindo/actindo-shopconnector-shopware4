@@ -1971,8 +1971,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 	}
     /**
      * Scan for Variant Fragments and sets them to the correct article id
-     * @param $articleId integer article id
-     * @param $variantid integer varianten id
+     * @param int $articleId article id
+     * @param int $variantid varianten id
      */
     protected function _scanForFragments($articleId,$variantid){
         $sql = 'SELECT articleID from s_articles_details where id= '.(int)$variantid.'; ';
@@ -1996,31 +1996,28 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     }
     /**
      * check for inactive articles that should be active
-     * @param $articleID int article id
-     * @param $update array with article details
-     * @param $shopArticle array containing article information like active/inactive
+     * @param int $articleID article id
+     * @param array $update array with article details
+     * @param array $shopArticle array containing article information like active/inactive
      */
     protected function _checkActiveArticles($articleID,$update,$shopArticle){
         if((bool) $shopArticle['products_status']!==false){
             $sql = 'UPDATE s_articles set active=1 WHERE id='.(int)$articleID.';';
             try{
                 Shopware()->Db()->query($sql);
-            }catch(exception $e){
-
-            }
+            }catch(exception $e){ }
             if(!isset($product['shop']['attributes'])) {
                 $sql = 'UPDATE s_articles_details set active=1 WHERE articleID='.(int)$articleID.';';
                 try{
                     Shopware()->Db()->query($sql);
-                }catch(exception $e){
-                }
+                }catch(exception $e){ }
             }else{
                 foreach($update['variants'] as $key=>$value){
                     if((bool)$value['active']!==false){
                     $sql = 'UPDATE s_articles_details set active=1 WHERE id'.(int)$value['id'].';';
                         try{
                             Shopware()->Db()->query($sql);
-                        }catch(exception $e){}
+                        }catch(exception $e){ }
                     }
                 }
             }
