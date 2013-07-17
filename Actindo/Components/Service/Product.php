@@ -1016,7 +1016,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     'target' => $content['content_link_target'],
                 );
             }
-            /*// attach file to article (download)
+			#94111 adding content download after bzg fix
+            // attach file to article (download)
             elseif($content['type'] == 'file') {
                 if(substr($content['content_file_type'], -3) == 'pdf') {
                     $filetype = 'pdf';
@@ -1024,10 +1025,11 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 else {
                     $filetype = array_shift(explode('/', $content['content_file_type'], 2));
                 }
-                
+				//fix for reuploaded files with path as prefix
+                $filename = str_replace('media/pdf/','',$content['content_file_name']);
                 $path = $this->util->writeMediaFile(
                     $content['content'],
-                    $content['content_file_name'],
+                    $filename,
                     $filetype,
                     $content['content_file_size'],
                     $content['content_file_md5']
@@ -1042,7 +1044,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 else {
                     // do nothing for now, failed file attachment doesn't justify canceling the whole operation
                 }
-            }*/
+            }
         }
     }
     
