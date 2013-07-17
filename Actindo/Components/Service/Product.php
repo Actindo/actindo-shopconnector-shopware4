@@ -977,6 +977,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 		
         $this->_updateVariantImages($product, $articleID);
         $this->_updateFixVariants($product,$articleID);
+        $this->_checkActiveArticles(&$articleID,&$update,&$shopArticle);
         return array('ok' => true, 'success' => 1);
     }
     
@@ -1782,7 +1783,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             // a detail with the ordernumber we tried to create already exists; but with wrong configuration options (first query failed)
             // fix configurator
             $detailID = Shopware()->Db()->fetchOne('SELECT `id` FROM `s_articles_details` WHERE `ordernumber` = ?', array($ordernumber));
-            
+            #scan for fragments of variant articles
+            $this->_scanForFragments($articleID,$detailID);
             // leave s_articles_attributes intact
             
             // clear s_article_configurator_option_relations, will be refilled below
@@ -1967,4 +1969,58 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 			}
 		}
 	}
+    /**
+     * Scan for Variant Fragments and sets them to the correct article id
+     * @param int $articleId article id
+     * @param int $variantid varianten id
+     */
+    protected function _scanForFragments($articleId,$variantid){
+        $sql = 'SELECT articleID from s_articles_details where id= '.(int)$variantid.'; ';
+        try{
+            $result = Shopware()->Db()->fetchOne($sql);
+            if((int)$result !== (int)$articleId){
+                #found article fragment
+                $sql = 'SELECT * FROM s_articles WHERE id='.(int)$result.';';
+                if(count(Shopware()->Db()->fetchAll($sql))<1){
+                    $sql = 'UPDATE s_articles_attributes set articleID='.(int)$articleId.' WHERE articleID='.(int)$result.' and articledetailsID='.(int)$variantid.';';
+                    try{
+                        Shopware()->Db()->query($sql);
+                    }catch(Exception $e){}
+                    $sql = 'UPDATE s_articles_details set articleID='.(int)$articleId.' WHERE articleID='.(int)$result.' and id='.(int)$variantid.';';
+                    try{
+                        Shopware()->Db()->query($sql);
+                    }catch(Exception $e){}
+                }
+            }
+        }catch(Exception $e){}
+    }
+    /**
+     * check for inactive articles that should be active
+     * @param int $articleID article id
+     * @param array $update array with article details
+     * @param array $shopArticle array containing article information like active/inactive
+     */
+    protected function _checkActiveArticles($articleID,$update,$shopArticle){
+        if((bool) $shopArticle['products_status']!==false){
+            $sql = 'UPDATE s_articles set active=1 WHERE id='.(int)$articleID.';';
+            try{
+                Shopware()->Db()->query($sql);
+            }catch(exception $e){ }
+            if(!isset($product['shop']['attributes'])) {
+                $sql = 'UPDATE s_articles_details set active=1 WHERE articleID='.(int)$articleID.';';
+                try{
+                    Shopware()->Db()->query($sql);
+                }catch(exception $e){ }
+            }else{
+                foreach($update['variants'] as $key=>$value){
+                    if((bool)$value['active']!==false){
+                    $sql = 'UPDATE s_articles_details set active=1 WHERE id'.(int)$value['id'].';';
+                        try{
+                            Shopware()->Db()->query($sql);
+                        }catch(exception $e){ }
+                    }
+                }
+            }
+        }
+    }
 }
