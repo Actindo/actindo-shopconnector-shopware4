@@ -977,7 +977,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 		
         $this->_updateVariantImages($product, $articleID);
         $this->_updateFixVariants($product,$articleID);
-        $this->_checkActiveArticles(&$articleID,&$update,&$shopArticle);
+        $this->_checkActiveArticles($articleID,$update,$shopArticle);
         return array('ok' => true, 'success' => 1);
     }
     
@@ -2002,7 +2002,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param array $update array with article details
      * @param array $shopArticle array containing article information like active/inactive
      */
-    protected function _checkActiveArticles($articleID,$update,$shopArticle){
+    protected function _checkActiveArticles(&$articleID,&$update,&$shopArticle){
         if((bool) $shopArticle['products_status']!==false){
             $sql = 'UPDATE s_articles set active=1 WHERE id='.(int)$articleID.';';
             try{
