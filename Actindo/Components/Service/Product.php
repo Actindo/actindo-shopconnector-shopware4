@@ -166,9 +166,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             }
             $whereClause = Shopware()->Db()->quoteInto('WHERE `sa`.`id` = ?', $articleID);
         }
-        
+
         $result = Shopware()->Db()->fetchAll(sprintf('
-            SELECT `sa`.`id`, `sa`.`active`, `sad`.`ordernumber`, `name`, `datum`, `changetime`, count(`variants`.`id`) AS `variants`,
+            SELECT `sa`.`id`, `sa`.`active`, `sad`.`ordernumber`, `name`, `datum`, `changetime`, `configurator_set_id` AS `variants`,
                 (SELECT `categoryID`
                  FROM `s_articles_categories` `sac`
                  INNER JOIN `s_categories` `sc` ON `sc`.`id` = `sac`.`categoryID`
@@ -177,14 +177,12 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                  LIMIT 1) AS `categoryID`
             FROM `s_articles` `sa`
             INNER JOIN `s_articles_details` `sad` ON `sad`.`articleID` = `sa`.`id` AND `sad`.`kind` = 1
-            LEFT JOIN `s_articles_details` `variants` ON `variants`.`articleID` = `sa`.`id` AND `variants`.`kind` = 2
             ' . $whereClause . '
-            GROUP BY `sa`.`id`
             ORDER BY `sa`.`id`
             LIMIT %d
             OFFSET %d
         ', $limit, $offset));
-        
+
         $products = array();
         $variantIds = array();
         while($article = array_shift($result)) {
