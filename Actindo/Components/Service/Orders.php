@@ -187,8 +187,8 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             $ref['customer']['verf'] = isset(self::$paymentMap[$ref['_payment_method']]) ? self::$paymentMap[$ref['_payment_method']] : 'VK';
             switch($ref['customer']['verf']) {
                 case 'L': 
-                    $ref['customer']['blz'] = str_replace(array(' ', '-', '/'), '', $customer['debit']['bankCode']);
-                    $ref['customer']['kto'] = $customer['debit']['account'];
+                    $ref['customer']['blz'] = str_replace(array(' ', '-', '/'), '', (string) $customer['debit']['bankCode']);
+                    $ref['customer']['kto'] = (string) $customer['debit']['account'];
                     if(!in_array($customer['debit']['accountHolder'], array('', 'Inhaber'))) {
                         $ref['customer']['kto_inhaber'] = $customer['debit']['accountHolder'];
                     }
