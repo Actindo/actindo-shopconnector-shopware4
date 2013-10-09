@@ -93,7 +93,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      */
     protected function getCategoryTree($omitRoot = true) {
 	$this->categories = array();
-        $result = $this->getRepository()->getListQuery(array('parent'=>null), array('id'=>'ASC'), null, null, false)->getArrayResult();
+        $result = $this->getRepository()->getListQuery(array('parent'=>null), array(), null, null, false)->getArrayResult();
 	if(count($result)==1){
 		foreach($result as $key){
 			$id = (int) $key['id'];
@@ -116,7 +116,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @return type array if no children exist, returns empty array, else returns category tree
      */
     public function runChildrenCategories($id){
-        $result = $this->getRepository()->getListQuery(array('parent'=>$id), array('id'=>'ASC'), null, null, false)->getArrayResult();
+        $result = $this->getRepository()->getListQuery(array('parent'=>$id), array(), null, null, false)->getArrayResult();
 	if(count($result)>0){
 		$categories = array();
 		foreach($result as $key){
