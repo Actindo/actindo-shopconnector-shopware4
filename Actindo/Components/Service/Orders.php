@@ -186,9 +186,14 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             
             $ref['customer']['verf'] = isset(self::$paymentMap[$ref['_payment_method']]) ? self::$paymentMap[$ref['_payment_method']] : 'VK';
             switch($ref['customer']['verf']) {
-                case 'L': 
-                    $ref['customer']['blz'] = str_replace(array(' ', '-', '/'), '', (string) $customer['debit']['bankCode']);
-                    $ref['customer']['kto'] = (string) $customer['debit']['account'];
+                case 'L':
+                    if(preg_match('[a-zA-Z]{2}[0-9]{2}[a-zA-Z0-9]{4}[0-9]{7}([a-zA-Z0-9]?){0,16}',$customer['debit']['account'])){
+                        $ref['customer']['iban'] = (string) $customer['debit']['account'];
+                        $ref['customer']['swift'] = (string) $customer['debit']['bankCode'];
+                    }else{
+                        $ref['customer']['blz'] = str_replace(array(' ', '-', '/'), '', (string) $customer['debit']['bankCode']);
+                        $ref['customer']['kto'] = (string) $customer['debit']['account'];
+                    }
                     if(!in_array($customer['debit']['accountHolder'], array('', 'Inhaber'))) {
                         $ref['customer']['kto_inhaber'] = $customer['debit']['accountHolder'];
                     }
