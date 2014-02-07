@@ -92,23 +92,56 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @throws Actindo_Components_Exception 
      */
     protected function getCategoryTree($omitRoot = true) {
-	$this->categories = array();
-        $result = $this->getRepository()->getListQuery(array('parent'=>null), array(), null, null, false)->getArrayResult();
-	if(count($result)==1){
-		foreach($result as $key){
-			$id = (int) $key['id'];
-			$parent = (int) $key['parentId'];    
-			$categories = array(
-				'categories_id' => $id,
-				'parent_id' => $parent,
-				'categories_name' => $key['name'],
-				'children' => $this->runChildrenCategories($id),
-			);
-			$this->categories=$categories;
-		}
-	}else if(count($result)>1){ throw new Actindo_Components_Exception("Multiple Roots found! Not allowed");
-	}else{ throw new Actindo_Components_Exception("No Root found!"); }
-	return $this->categories['children'];
+        if(!version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=')) {
+            $this->categories = array();
+            $result = $this->getRepository()->getListQuery(array('parent'=>null), array(), null, null, false)->getArrayResult();
+            if(count($result)==1){
+                foreach($result as $key){
+                    file_put_contents(dirname(__FILE__).'/log.file',$key['name']."\n",FILE_APPEND);
+                    $id = (int) $key['id'];
+                    $parent = (int) $key['parentId'];    
+                    $categories = array(
+                        'categories_id' => $id,
+                        'parent_id' => $parent,
+                        'categories_name' => $key['name'],
+                        'children' => $this->runChildrenCategories($id),
+                    );
+                    $this->categories=$categories;
+                }
+            }else if(count($result)>1){ throw new Actindo_Components_Exception("Multiple Roots found! Not allowed");
+            }else{ throw new Actindo_Components_Exception("No Root found!"); }
+            return $this->categories['children'];
+        }else{
+            $result = $this->getRepository()->getListQuery(array(), array(), null, null, false)->getArrayResult();
+            
+            $categories = $tree = array();
+            while($category = array_shift($result)) {
+                $id = (int) $category['id'];
+                $parent = (int) $category['parentId'];
+                
+                $categories[$id] = array(
+                    'categories_id' => $id,
+                    'parent_id' => $parent,
+                    'categories_name' => $category['name'],
+                    'children' => array(),
+                );
+                
+                if($category['parentId'] === null) { // root node
+                    $tree[] =& $categories[$id];
+                }
+                else {
+                    if(!isset($categories[$parent])) {
+                        throw new Actindo_Components_Exception(sprintf("Found a category whos parent I don't know: %s (ID: %d, parentID: %d)", $category['name'], $id, $parent)); // @todo
+                    }
+                    $categories[$parent]['children'][$id] =& $categories[$id];
+                }
+            }
+            
+            if($omitRoot) {
+                return $tree[0]['children'];
+            }
+            return $tree;
+        }
     }
     /**
      * returns recursive array tree
