@@ -250,7 +250,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'length'            => (string) $articleMainDetails['len'],
             'manufacturers_id'  => (int) $article['supplierId'],
             'mwst'              => (float) $article['tax']['tax'],
-            'notification'      => $article['notification'] ? 1 : 0,
+            'email_notification' => $article['notification'] ? 1 : 0,
             'preisgruppen'      => array(),     // is set below array definition: $this->_exportPrices()
             'products_date_available' => ($articleMainDetails['releaseDate'] instanceof DateTime) ? $articleMainDetails['releaseDate']->format('Y-m-d') : '0000-00-00',
             'products_description' => '',       // done in $this->_exportTranslations()
@@ -908,7 +908,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'pseudoSales'     => (int) $shopArticle['pseudosales'],
             'releaseDate'     => $releaseDate,
             'supplierId'      => (int) $shopArticle['manufacturers_id'],
-            #Ticket 91131
             'notification'    => (int) $shopArticle['email_notification'],
             'mainDetail'      => array(
                 'ean'            => $product['ean'],
