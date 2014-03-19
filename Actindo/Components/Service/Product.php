@@ -2005,21 +2005,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             try{
                 Shopware()->Db()->query($sql);
             }catch(exception $e){ }
-            if(!isset($product['shop']['attributes'])) {
-                $sql = 'UPDATE s_articles_details set active=1 WHERE articleID='.(int)$articleID.';';
-                try{
-                    Shopware()->Db()->query($sql);
-                }catch(exception $e){ }
-            }else{
-                foreach($update['variants'] as $key=>$value){
-                    if((bool)$value['active']!==false){
-                    $sql = 'UPDATE s_articles_details set active=1 WHERE id'.(int)$value['id'].';';
-                        try{
-                            Shopware()->Db()->query($sql);
-                        }catch(exception $e){ }
-                    }
-                }
-            }
         }
     }
 }
