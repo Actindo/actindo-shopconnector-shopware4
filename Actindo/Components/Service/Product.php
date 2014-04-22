@@ -578,13 +578,15 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'name'            => 'products_name',
             'description'     => 'products_short_description',
             'descriptionLong' => 'products_description',
-            'keywords'        => 'products_keywords'
+            'keywords'        => 'products_keywords',
+            'metaTitle'       => 'products_meta_title',
         );
         $response['description'][$this->util->getDefaultLanguage()] = array(
             'language_id' => $this->util->getDefaultLanguage(),
             'products_description' => (string) $article['descriptionLong'],
             'products_short_description' => (string) $article['description'],
             'products_keywords' => (string) $article['keywords'],
+            'products_meta_title' => (string) $article['metaTitle'],
         );
         foreach($article['translations'] AS $languageID => $translation) {
             $response['description'][$languageID] = array(
@@ -946,7 +948,21 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $articles = $this->resources->article;
         $articles->update($articleID, $update);
 		
-		#
+        $defaultLanguageID = $this->util->getDefaultLanguage();
+        foreach($product['shop']['desc'] AS $translation) {
+            if((int) $translation['language_id'] == $defaultLanguageID) {
+                continue;
+            }
+            if(false === ($shopID = $this->util->findShopIdByLocale($translation['language_code']))) {
+                continue;
+            }
+            isset($postData[$shopID]) or $postData[$shopID] = array();
+            $postData[$shopID][] = array(
+                'field' => 'metaTitle',
+                'value' => $translation['products_meta_title'],
+            );
+        }
+        
 		if(count($postData)>0){
 			foreach($postData as $key=>$value){
 				#First Get Entry
@@ -1365,6 +1381,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $ref['keywords'] = $translation['products_keywords'];
             $ref['description'] = $translation['products_short_description'];
             $ref['descriptionLong'] = $translation['products_description'];
+            $ref['metaTitle'] = $translation['products_meta_title'];
         }
     }
     
