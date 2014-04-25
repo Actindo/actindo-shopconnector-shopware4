@@ -1140,12 +1140,16 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $languages = $this->util->getLanguages();
             $defaultLanguageId = $this->util->getDefaultLanguage();
             $defaultLanguageCode = $languages[$defaultLanguageId]['language_code'];
+            $imageNames = array();
             
-            //$i = 0;
+            $i = $j = 0;
             foreach(array_keys($images) AS $key) {
                 $image =& $images[$key];
-				$image['image_name'] = $articleID.'-'.$i.'.'.$image['image_name'];
-				$i++;
+                while(in_array($image['image_name'], $imageNames)) {
+                    $pathinfo = pathinfo($image['image_name']);
+                    $image['image_name'] = $pathinfo['filename'] . '-' .  ++$i . '.' . $pathinfo['extension'];
+                }
+                $imageNames[] = $image['image_name'];
                 $path = $this->util->writeTemporaryFile($image['image_name'], $image['image']);
                 
                 $description = '';
@@ -1161,7 +1165,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 $update['images'][] = array(
                     'link'        => sprintf('file://%s', $path),
                     'description' => $description,
-                    //'main'        => ($i++ == 0),
+                    'main'        => ++$j,
                 );
                 unset($image);
             }
