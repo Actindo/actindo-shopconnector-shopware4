@@ -1040,6 +1040,9 @@ class Actindo_Components_Util {
      * @throws Actindo_Components_Exception if no temp file could be created or if something went wrong while writing the contents
      */
     public function writeTemporaryFile($filename, $contents) {
+        $pathinfo = pathinfo($filename);
+        $filename = preg_replace('[^a-zA-Z0-9\-_]', '', $pathinfo['filename']) . '.' . $pathinfo['extension'];
+        
         $tmpDirs = array(
             '/tmp',
             rtrim(ini_get('upload_tmp_dir'), '/'),
@@ -1050,6 +1053,7 @@ class Actindo_Components_Util {
             if(false !== @touch($path)) {
                 break;
             }
+            $path = false;
         }
         if($path === false) {
             throw new Actindo_Components_Exception('Could not create a temporary file anywhere.');
