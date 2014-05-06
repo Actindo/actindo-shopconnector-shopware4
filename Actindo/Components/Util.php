@@ -1093,6 +1093,31 @@ class Actindo_Components_Util {
         }
         return $out;
     }
+    /**
+     * Scans the given valueSet for NULL and converts it to string
+     * used to prevent NIL errors on XMLRPC processor
+     * @param $valueSet
+     * @return array|string
+     */
+    public static function ScanForNullAndCorrect($valueSet){
+        if(is_array($valueSet)){
+            foreach($valueSet as $key=>$value){
+                if(is_array($value)){
+                    $valueSet[$key] = self::ScanForNullAndCorrect($value);
+                }else{
+                    if(empty($value) && $value!==0){
+                        $valueSet[$key] = (string)'';
+                    }
+                }
+            }
+            return $valueSet;
+        }else{
+            if(empty($valueSet) && $valueSet!==0){
+                $valueSet = (string)'';
+            }
+            return $valueSet;
+        }
+    }
 }
 
 /**

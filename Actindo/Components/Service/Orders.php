@@ -212,6 +212,8 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                     AND `modus` = 3
             ', $order['id']));
         }
+
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         
         return array('ok' => true, 'orders' => $response);
     }
