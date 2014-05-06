@@ -1041,7 +1041,11 @@ class Actindo_Components_Util {
      */
     public function writeTemporaryFile($filename, $contents) {
         $pathinfo = pathinfo($filename);
-        $filename = preg_replace('[^a-zA-Z0-9\-_]', '', $pathinfo['filename']) . '.' . $pathinfo['extension'];
+        $filename = preg_replace('/[^a-zA-Z0-9\-_]/', '', $pathinfo['filename']);
+        if(empty($filename)) {
+            $filename = uniqid();
+        }
+        $filename .=  '.' . $pathinfo['extension'];
         
         $tmpDirs = array(
             '/tmp',
