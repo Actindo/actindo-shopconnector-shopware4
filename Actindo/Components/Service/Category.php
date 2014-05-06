@@ -173,6 +173,9 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @param array $data associative array that contains the category name (and possibly other stuff)
      */
     protected function categoryAdd($parentID, $data) {
+        if((int)$parentID<1){
+            $parentID = 1;
+        }
         $defaultLanguageID = $this->util->getDefaultLanguage();
         $name = $data['description'][$defaultLanguageID]['name'];
         
