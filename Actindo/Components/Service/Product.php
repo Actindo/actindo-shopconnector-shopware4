@@ -15,6 +15,10 @@
 
 
 class Actindo_Components_Service_Product extends Actindo_Components_Service {
+    protected $categories=array(
+        'add'=>array(),
+        'remove'=>array(),
+    );
     /**
      * retrieves the article count in total and per category
      * 
@@ -926,7 +930,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'width'          => $product['size_b'],
             ),
         );
-        $this->_updateCategories($product, $update);
+        $this->_updateCategories($product, $update,$articleID);
         $this->_updateContent($product, $update);
         $this->_updateCrossellings($product, $update);
         $this->_updateCustomerGroupPermissions($product, $update);
@@ -944,7 +948,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateTranslations($product, $update);
         $this->_updateVPE($product, $update);
         $this->_updateVariants($product, $update, $articleID);
-        
         $articles = $this->resources->article;
         $articles->update($articleID, $update);
 		
@@ -991,6 +994,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateVariantImages($product, $articleID);
         $this->_updateFixVariants($product,$articleID);
         $this->_checkActiveArticles($articleID,$update,$shopArticle);
+        if(version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=')){
+            $this->updateCategoriesModificationPost($articleID);
+        }
         return array('ok' => true, 'success' => 1);
     }
     
@@ -999,15 +1005,34 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * 
      * @param array $product product array coming from actindo
      * @param array $update update array to be put intp api->update()
+     * @param integer $articleID Article ID
      */
-    protected function _updateCategories(&$product, &$update) {
+    protected function _updateCategories(&$product, &$update, &$articleID) {
+        $version = version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=');
+        if($version) {
+            //get all current categories of product
+            $article = $this->resources->article->getOne($articleID);
+            $categories = array();
+            if(count($article['categories'])>0){
+                foreach($article['categories'] as $category){
+                    $categories[$category['id']] = $category['name'];
+                }
+            }
+        }
         is_array($product['shop']['all_categories']) or $product['shop']['all_categories'] = array();
         $categoryIDs = array_merge(array($product['swg']), $product['shop']['all_categories']);
         $categoryIDs = array_unique(array_filter(array_map('intval', $categoryIDs)));
-        
         $update['categories'] = array();
         foreach($categoryIDs AS $categoryID) {
             $update['categories'][] = array('id' => $categoryID);
+            if($version && isset($categories[$categoryID])){
+                unset($categories[$categoryID]);
+            }else if($version){
+                $this->categories['add'][] = $categoryID;
+            }
+        }
+        if($version){
+            $this->categories['remove'] = $categories;
         }
     }
     
@@ -2026,6 +2051,22 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             try{
                 Shopware()->Db()->query($sql);
             }catch(exception $e){ }
+        }
+    }
+    /**
+     * Method to process the denormalized categories
+     */
+    protected function updateCategoriesModificationPost(&$articleID){
+        $component = Shopware()->CategoryDenormalization();
+        if(count($this->categories['add'])>0){
+            foreach($this->categories['add'] as $category){
+                $component->addAssignment($articleID,$category);
+            }
+        }
+        if(count($this->categories['remove'])>0){
+            foreach($this->categories['remove'] as $categoryId=>$category){
+                $component->removeAssignment($articleID,$categoryId);
+            }
         }
     }
 }
