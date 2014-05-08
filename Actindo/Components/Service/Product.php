@@ -994,7 +994,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateVariantImages($product, $articleID);
         $this->_updateFixVariants($product,$articleID);
         $this->_checkActiveArticles($articleID,$update,$shopArticle);
-        if(version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=')){
+        if(version_compare(Shopware()->Config()->sVERSION, '4.1.0', '>=')){
             $this->updateCategoriesModificationPost($articleID);
         }
         return array('ok' => true, 'success' => 1);
@@ -1008,31 +1008,37 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param integer $articleID Article ID
      */
     protected function _updateCategories(&$product, &$update, &$articleID) {
-        $version = version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=');
-        if($version) {
+        is_array($product['shop']['all_categories']) or $product['shop']['all_categories'] = array();
+        $categoryIDs = array_merge(array($product['swg']), $product['shop']['all_categories']);
+        $categoryIDs = array_unique(array_filter(array_map('intval', $categoryIDs)));
+        $update['categories'] = array();
+        //feature requirement only for shopware > 4.1.0
+        //There is a bug that prevents Shopware from correct displaying article data
+        if(version_compare(Shopware()->Config()->sVERSION, '4.1.0', '>=')) {
             //get all current categories of product
             $article = $this->resources->article->getOne($articleID);
             $categories = array();
+            //prepare Data
             if(count($article['categories'])>0){
                 foreach($article['categories'] as $category){
                     $categories[$category['id']] = $category['name'];
                 }
             }
-        }
-        is_array($product['shop']['all_categories']) or $product['shop']['all_categories'] = array();
-        $categoryIDs = array_merge(array($product['swg']), $product['shop']['all_categories']);
-        $categoryIDs = array_unique(array_filter(array_map('intval', $categoryIDs)));
-        $update['categories'] = array();
-        foreach($categoryIDs AS $categoryID) {
-            $update['categories'][] = array('id' => $categoryID);
-            if($version && isset($categories[$categoryID])){
-                unset($categories[$categoryID]);
-            }else if($version){
-                $this->categories['add'][] = $categoryID;
+            //run through categories, assign it to the article and check if it is already assign to the current product
+            foreach($categoryIDs AS $categoryID) {
+                $update['categories'][] = array('id' => $categoryID);
+                if(isset($categories[$categoryID])){
+                    unset($categories[$categoryID]);
+                }else{
+                    $this->categories['add'][] = $categoryID;
+                }
             }
-        }
-        if($version){
+            //assign removed categories
             $this->categories['remove'] = $categories;
+        }else{
+            foreach($categoryIDs AS $categoryID) {
+                $update['categories'][] = array('id' => $categoryID);
+            }
         }
     }
     
