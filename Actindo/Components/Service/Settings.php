@@ -19,10 +19,10 @@ class Actindo_Components_Service_Settings extends Actindo_Components_Service {
      * returns the shops basic settings like manufacturers, languages, subhopinfo and so on
      * 
      * @api
-     * param struct $vars an associative array with information from actindo that may be relevant for the connector
+     * @param struct $vars an associative array with information from actindo that may be relevant for the connector
      * @return struct
      */
-    public function get(/*$vars*/) {
+    public function get($vars) {
         $ret = array();
         
         if(isset($vars['notification_url_order'])) { // url to ping for new orders
