@@ -301,7 +301,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_exportProperties($article, $response);
         $this->_exportTranslations($article, $response);
         $this->_exportVariants($article, $response);
-        
         return array('ok' => 'true', 'products' => array($response));
     }
     
@@ -916,6 +915,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'supplierId'      => (int) $shopArticle['manufacturers_id'],
             'notification'    => (int) $shopArticle['email_notification'],
             'mainDetail'      => array(
+                'active'         => (bool) $shopArticle['products_status'],
                 'ean'            => $product['ean'],
                 'height'         => $product['size_h'],
                 'inStock'        => (int) $product['l_bestand'],
@@ -1613,7 +1613,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 // @todo update variant with product info
             }
         }
-        
         $activeDetailIDs = array(); // all s_article_details that are not in here are removed from db after this loop
         foreach($product['shop']['attributes']['combination_advanced'] AS $ordernumber => &$variant) {
             if(!isset($matchingVariants[$ordernumber])) {
@@ -1638,8 +1637,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             
             $data = array_merge($update['mainDetail'], array(
                 'id'           => $variantID,
-                
-                'active'       => (int) $variant['data']['products_status'],
+                'active'       => (bool) $variant['data']['products_status'],
                 'additionalText' => implode(' / ', $optionValues),
                 'ean'          => $variant['shop']['art']['products_ean'],
                 'inStock'      => (int) $variant['l_bestand'],

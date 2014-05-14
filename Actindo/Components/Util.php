@@ -294,7 +294,21 @@ class Actindo_Components_Util {
         }
         var_dump($var);
     }
-    
+
+    /**
+     * log2disk
+     * Write Output to fs
+     * $var string data to dump
+     * $fielname boolean/mixed target file
+     * $append boolean append to file
+     */
+    public static function log2disk(&$var,$filename=false,$append=FILE_APPEND){
+        if(!$filename){
+            $filename = dirname(__FILE__).'/log';
+        }
+        $output = self::dump($var);
+        file_put_contents($filename,$output,$append);
+    }
     /**
      * returns information about a customer group
      * 
