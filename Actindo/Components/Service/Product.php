@@ -1436,8 +1436,16 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             }
             
             $ref['name'] = $name;
+            /**
+             * CON-262
+             * Fallback if Meta Desciption is empty
+             */
+            $metaDescription = $translation['products_meta_description'];
+            if(empty($metaDescription)){
+                $metaDescription = $translation['products_short_description'];
+            }
+            $ref['description'] = $metaDescription;
             $ref['keywords'] = $translation['products_keywords'];
-            $ref['description'] = $translation['products_short_description'];
             $ref['descriptionLong'] = $translation['products_description'];
             $ref['metaTitle'] = $translation['products_meta_title'];
         }
