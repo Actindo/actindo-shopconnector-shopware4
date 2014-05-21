@@ -901,6 +901,29 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         } catch(Exception $e) {
             $releaseDate = null;
         }
+        
+        if(floatval($shopArticle['products_weight']) != floatval(0)) {
+            $weight = (float) $shopArticle['products_weight'];
+        }
+        else {
+            $weight = (float) $product['weight'];
+            switch($product['weight_unit']) {
+                case 'mg':
+                    $weight /= 1000000;
+                    break;
+                case 'g':
+                    $weight /= 1000;
+                    break;
+                case 'pf':
+                    $weight /= 2.2046226;
+                    break;
+                case 'dz':
+                    $weight *= 100;
+                    break;
+                
+            }
+        }
+        
         // this array will eventually be put into api method update()
         $update = array(
             'active'          => (bool) $shopArticle['products_status'],
@@ -926,7 +949,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'shippingTime'   => max(0, (int) $shopArticle['shipping_status'] - 1),
                 //'stockMin'       => (int) $product['l_minbestand'],
                 'supplierNumber' => $shopArticle['suppliernumber'],
-                'weight'         => (float)(($shopArticle['products_weight']==(float)0)?$product['weight']:$shopArticle['products_weight']),
+                'weight'         => $weight,
                 'width'          => $product['size_b'],
             ),
         );
