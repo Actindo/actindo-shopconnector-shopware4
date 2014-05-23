@@ -183,7 +183,8 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
         $category = new \Shopware\Models\Category\Category();
         
         $category->setParent($parent)
-                 ->setName($name);
+                 ->setName($name)
+                 ->setExternal('');
         Shopware()->Models()->persist($category);
         Shopware()->Models()->flush();
         
