@@ -131,7 +131,13 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
                 }
                 else {
                     if(!isset($categories[$parent])) {
-                        throw new Actindo_Components_Exception(sprintf("Found a category whos parent I don't know: %s (ID: %d, parentID: %d)", $category['name'], $id, $parent)); // @todo
+                        // invalid category: parent does not exist - just append it to the root node
+                        if(isset($tree[0])) {
+                            $parent = $tree[0]['categories_id'];
+                        }
+                        else {
+                            throw new Actindo_Components_Exception(sprintf("Found a category whos parent I don't know: %s (ID: %d, parentID: %d)", $category['name'], $id, $parent)); // @todo
+                        }
                     }
                     $categories[$parent]['children'][$id] =& $categories[$id];
                 }
