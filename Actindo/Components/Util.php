@@ -1023,14 +1023,15 @@ class Actindo_Components_Util {
                 return false;
             }
         }
+        $targetFolder = rtrim($targetFolder, ' /\\');
         
         while(true) {
             $targetFile = sprintf('%s/%s', $targetFolder, $filename);
             $absoluteTargetFile = $basePath . $targetFile;
             if(file_exists($absoluteTargetFile)) {
-                if($filesize > 0 && $md5 !== null) {
-                    if($filesize == filesize($absoluteTargetFile) && $md5 == md5(file_get_contents($absoluteTargetFile))) {
-                        // name, size and md5 match, assume its the same file and return its path
+                if($md5 !== null) {
+                    if($md5 == md5(file_get_contents($absoluteTargetFile))) {
+                        // name and md5 match, assume its the same file and return its path
                         return $targetFile;
                     }
                 }

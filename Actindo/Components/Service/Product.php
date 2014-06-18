@@ -1093,7 +1093,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $filetype = array_shift(explode('/', $content['content_file_type'], 2));
                 }
 				//fix for reuploaded files with path as prefix
-                $filename = str_replace('media/pdf/','',$content['content_file_name']);
+                $filename = basename($content['content_file_name']);
                 $path = $this->util->writeMediaFile(
                     $content['content'],
                     $filename,
