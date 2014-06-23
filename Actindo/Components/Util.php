@@ -1029,8 +1029,15 @@ class Actindo_Components_Util {
             $targetFile = sprintf('%s/%s', $targetFolder, $filename);
             $absoluteTargetFile = $basePath . $targetFile;
             if(file_exists($absoluteTargetFile)) {
-                if($md5 !== null) {
-                    if($md5 == md5(file_get_contents($absoluteTargetFile))) {
+                if(filesize($absoluteTargetFile) == $filesize)
+                {
+                    // name and size match, assume its the same file and return its path
+                    return $targetFile;
+                }
+                if($md5 !== null)
+                {
+                    if($md5 == md5(file_get_contents($absoluteTargetFile)))
+                    {
                         // name and md5 match, assume its the same file and return its path
                         return $targetFile;
                     }
