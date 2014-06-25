@@ -972,32 +972,32 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateVPE($product, $update);
         $this->_updateVariants($product, $update, $articleID);
         $articles = $this->resources->article;
-            try
+        try
+        {
+            $articles->update($articleID, $update);
+        }
+        catch(\Exception $ex)
+        {
+            //do Corrections only for shopware greater 4.2.0
+            if(version_compare(Shopware()->Config()->sVERSION, '4.2.0', '>='))
             {
-                $articles->update($articleID, $update);
-            }
-            catch(\Exception $ex)
-            {
-                //do Corrections only for shopware greater 4.2.0
-                if(version_compare(Shopware()->Config()->sVERSION, '4.2.0', '>='))
+                if(count($product['shop']['attributes']['combination_advanced']) > 0)
                 {
-                    if(count($product['shop']['attributes']['combination_advanced']) > 0)
-                    {
-                        //variant set has changed. This means that the set articles main detail does not exist (propably been deleted). So a new main detail id needs to be set
-                        $firstVariantArticleNumber = current(array_keys($product['shop']['attributes']['combination_advanced']));
-                        $sql = 'SELECT id FROM s_articles_details WHERE ordernumber='.Shopware()->Db()->quote($firstVariantArticleNumber);
-                        $result = Shopware()->Db()->query($sql);
-                        $firstVairantArticleId = $result->fetch(PDO::FETCH_ASSOC);
-                        $firstVairantArticleId = $firstVairantArticleId['id'];
-                        $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVairantArticleId.' WHERE id='.(int)$articleID.';';
-                        Shopware()->Db()->query($sql);
-                        //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
-                        $articles->update($articleID, $update);
-                    }
-                    else
-                    {
-                        throw $ex;
-                    }
+                    //variant set has changed. This means that the set articles main detail does not exist (propably been deleted). So a new main detail id needs to be set
+                    $firstVariantArticleNumber = current(array_keys($product['shop']['attributes']['combination_advanced']));
+                    $sql = 'SELECT id FROM s_articles_details WHERE ordernumber='.Shopware()->Db()->quote($firstVariantArticleNumber);
+                    $result = Shopware()->Db()->query($sql);
+                    $firstVairantArticleId = $result->fetch(PDO::FETCH_ASSOC);
+                    $firstVairantArticleId = $firstVairantArticleId['id'];
+                    $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVairantArticleId.' WHERE id='.(int)$articleID.';';
+                    Shopware()->Db()->query($sql);
+                    //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
+                    $articles->update($articleID, $update);
+                }
+                else
+                {
+                    throw $ex;
+                }
             }
         }
 		
