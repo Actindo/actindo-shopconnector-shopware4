@@ -978,9 +978,10 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             try
             {
                 $articles->update($articleID, $update);
-            }catch(\Exception $ex)
+            }
+            catch(\Exception $ex)
             {
-                if(count($product['shop']['attributes']['combination_advanced'])>0)
+                if(count($product['shop']['attributes']['combination_advanced']) > 0)
                 {
                     //variant set has changed. This means that the set articles main detail does not exist (propably been deleted). So a new main detail id needs to be set
                     $firstVariantArticleNumber = current(array_keys($product['shop']['attributes']['combination_advanced']));
@@ -994,7 +995,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $articles->update($articleID, $update);
                 }
             }
-        }else{
+        }
+        else
+        {
             $articles->update($articleID, $update);
         }
 		
