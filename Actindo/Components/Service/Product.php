@@ -228,14 +228,14 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         $unit = $this->util->getVPEs($articleMainDetails['unitId']);
-	//CON-287
+        //CON-287
         //if it is an variant article calculate the stock
         if( count($article['details'] ) > 0)
         {
             $parentArticleStock = 0;
             foreach( $article['details'] as $articleDetail)
             {
-                $parentArticleStock += (int)$articleDetail['inStock'];
+                $parentArticleStock += (int) $articleDetail['inStock'];
             }
         }
         //else use regular stock field
