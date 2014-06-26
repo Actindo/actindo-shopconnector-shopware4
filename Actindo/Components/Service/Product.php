@@ -228,6 +228,21 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         $unit = $this->util->getVPEs($articleMainDetails['unitId']);
+	//CON-287
+        //if it is an variant article calculate the stock
+        if( count($article['details'] ) > 0)
+        {
+            $parentArticleStock = 0;
+            foreach( $article['details'] as $articleDetail)
+            {
+                $parentArticleStock += (int)$articleDetail['inStock'];
+            }
+        }
+        //else use regular stock field
+        else
+        {
+            $parentArticleStock = (int) $articleMainDetails['inStock'];
+        }
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
             'all_categories'    => array(),     // is set below array definition: $this->_exportCategories()
@@ -250,7 +265,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'images'            => array(),     // is set below array definition: $this->_exportImages()
             'is_brutto'         => 0,           // is set below array definition: $this->_exportPrices()
             'last_modified'     => ($article['changed'] instanceof DateTime) ? $article['changed']->getTimestamp() : -1,
-            'l_bestand'         => (int) $articleMainDetails['inStock'],
+            'l_bestand'         => $parentArticleStock,
             'length'            => (string) $articleMainDetails['len'],
             'manufacturers_id'  => (int) $article['supplierId'],
             'mwst'              => (float) $article['tax']['tax'],
