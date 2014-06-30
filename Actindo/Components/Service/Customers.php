@@ -184,8 +184,14 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
      */
     protected function exportList($filters) {
         $query = $this->util->createQueryFromFilters($filters, self::$customerColumnMapping);
-        $query['order'][] = '`su`.`id` DESC';
-        
+        /**
+         * CON-342
+         * if no order exists, define it
+         */
+        if(count($query['order']) === 0)
+        {
+            $query['order'][] = '`su`.`id` DESC';
+        }
         $sql = sprintf('
             SELECT SQL_CALC_FOUND_ROWS
                 `su`.`email`, `su`.`language`,
