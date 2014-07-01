@@ -1404,13 +1404,16 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             // attributes (attrX)
 			#Skip Translation for the Beginning.
             elseif(isset($attributeFields[$property['field_id']])) {
-				if($property['language_code'] != $defaultLanguage){
+				if(!empty($property['language_code']) && $property['language_code'] != $defaultLanguage) {
 					$datablock[$property['language_id']][] = array(
 						'value'=>$property['field_value'],
 						'field'=>$property['field_id'],
 					);
-				}else
+				}
+                else
+                {
 					$update['mainDetail']['attribute'][$property['field_id']] = $property['field_value'];
+                }
             }
         }
 		return $datablock;
@@ -1703,7 +1706,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'number'       => $ordernumber,
                 'shippingTime' => max(0, (int) $variant['data']['shipping_status'] - 1),
                 'weight'       => $variant['shop']['art']['products_weight'],
-                'attribute'    => array(),
             ));
             $this->_updatePrices($variant['preisgruppen'], $data, $this->util->findTaxRateById($update['taxId']));
             $this->_updateVariantDetailProperties($variant['shop']['properties'], $data);
@@ -1738,11 +1740,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     protected function _updateVariantDetailProperties(&$properties, &$data) {
         $attributeFields = $this->util->getArticleAttributeFields();
         
-        foreach(array_keys($attributeFields) AS $field) {
-            $data['attribute'][$field] = null;
-        }
-        
-        $data['attribute'] = array();
         foreach($properties AS &$property) {
             if(isset($attributeFields[$property['field_id']]) && $attributeFields[$property['field_id']]['variantable']) {
                 $data['attribute'][$property['field_id']] = $property['field_value'];
