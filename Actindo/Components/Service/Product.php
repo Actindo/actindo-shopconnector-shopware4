@@ -228,6 +228,21 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         $unit = $this->util->getVPEs($articleMainDetails['unitId']);
+        //CON-287
+        //if it is an variant article calculate the stock
+        if( count($article['details'] ) > 0)
+        {
+            $parentArticleStock = 0;
+            foreach( $article['details'] as $articleDetail)
+            {
+                $parentArticleStock += (int) $articleDetail['inStock'];
+            }
+        }
+        //else use regular stock field
+        else
+        {
+            $parentArticleStock = (int) $articleMainDetails['inStock'];
+        }
         $response = array(
             'abverkauf'         => $article['lastStock'] ? 1 : 0,
             'all_categories'    => array(),     // is set below array definition: $this->_exportCategories()
@@ -250,7 +265,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             'images'            => array(),     // is set below array definition: $this->_exportImages()
             'is_brutto'         => 0,           // is set below array definition: $this->_exportPrices()
             'last_modified'     => ($article['changed'] instanceof DateTime) ? $article['changed']->getTimestamp() : -1,
-            'l_bestand'         => (int) $articleMainDetails['inStock'],
+            'l_bestand'         => $parentArticleStock,
             'length'            => (string) $articleMainDetails['len'],
             'manufacturers_id'  => (int) $article['supplierId'],
             'mwst'              => (float) $article['tax']['tax'],
@@ -1047,6 +1062,25 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         if(version_compare(Shopware()->Config()->sVERSION, '4.1.0', '>=')){
             $this->updateCategoriesModificationPost($articleID);
         }
+        /**
+         * CON-282
+         *
+         *update Primary Article Image
+         */
+        $this->updateImageTranslation($product['art_nr'],$product['shop']['images']);
+        //now do child Articles
+        if(isset($product['shop']['attributes']) && count($product['shop']['attributes']['combination_advanced']) > 0)
+        {
+            foreach($product['shop']['attributes']['combination_advanced'] as $orderNumber => $attribute)
+            {
+                if(isset($attribute['shop']['images']) && count($attribute['shop']['images']) > 0)
+                {
+                    $this->updateImageTranslation($orderNumber,$attribute['shop']['images']);
+                }
+            }
+        }
+        // Clean Up vacant Image Translations
+        $this->cleanupImageTranslations();
         return array('ok' => true, 'success' => 1);
     }
     
@@ -2127,5 +2161,106 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 $component->removeAssignment($articleID,$categoryId);
             }
         }
+    }
+    /**
+     * method to update Image Translations
+     * Actually it only adds them as the API replaces the Images always
+     * @param string $orderNumber Order Number of the Article
+     * @param array $images Array of Images
+     */
+    protected function updateImageTranslation($orderNumber,$images)
+    {
+        $defaultLanguageID = $this->util->getDefaultLanguage();
+        $languages = $this->util->getLanguages();
+        if(count($languages) > 1)
+        {
+        	// Get the Article Number
+            $sql = '
+                SELECT
+                    DISTINCT(articleID)
+                FROM
+                    s_articles_attributes
+                WHERE
+                    actindo_masternumber='.Shopware()->Db()->quote($orderNumber).'
+                UNION
+                SELECT
+                    DISTINCT(articleID)
+                FROM
+                    s_articles_details
+                WHERE
+                    ordernumber='.Shopware()->Db()->quote($orderNumber).';';
+            $articleId = Shopware()->Db()->fetchAll($sql);
+            //only continue if something was found
+            if(count($articleId) > 0)
+            {
+            	//now get a list of database images
+                $articleId = $articleId[0]['articleID'];
+                $sql = '
+                    SELECT
+                        main,
+                        id
+                    FROM
+                        s_articles_img
+                    WHERE
+                        articleID='.(int)$articleId.'
+                    ;';
+                $results = Shopware()->Db()->fetchAll($sql);
+                //run through images and languages
+                foreach($results as $result)
+                {
+                    foreach($languages as $language)
+                    {
+                    	//add translation only if it is not the default translation
+                        if((int)$language['language_id'] !== (int)$defaultLanguageID)
+                        {
+                        	//prepare Translation Data
+                            $data = array(
+                                'description'=>$images[$result['main']]['image_title'][$language['language_code']]
+                            );
+                            //serialize it
+                            $data = serialize($data);
+                            //prepare the statement
+                            $sql = '
+                              INSERT INTO
+                              s_core_translations
+                                (objecttype,objectdata,objectkey,objectlanguage)
+                              VALUES
+                                (\'articleimage\','.Shopware()->Db()->quote($data).',\''.(int)$result['id'].'\',\''.(int)$language['language_id'].'\')
+                              ;';
+                            //execute Query
+                            Shopware()->Db()->query($sql);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * Cleans up the database and removes vacant image translations,
+     * that might still exist in DB
+     */
+    protected function cleanupImageTranslations()
+    {
+    	//SQL Query to delete only image translations that do not exist in the image database
+        $sql = '
+            DELETE
+            FROM
+              s_core_translations
+            WHERE
+              s_core_translations.objecttype=\'articleimage\'
+              and
+              NOT EXISTS
+                (
+                  SELECT
+                    id
+                  FROM
+                    s_articles_img
+                    WHERE
+                    s_articles_img.id=s_core_translations.objectkey
+                )
+            ;
+        ';
+        //execute Query
+        Shopware()->Db()->query($sql);
     }
 }
