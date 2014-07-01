@@ -218,7 +218,11 @@ class Actindo_Components_Util {
         $query = array(
             'limit'  => 0,
             'offset' => 0,
-            'order'  => array('1'),
+        	/**
+        	 * CON-342
+			 * Removed the '1' from Sortorder as this blocks sorting completly!
+			 */
+            'order'  => array( ),
             'where'  => array('1'),
         );
         
@@ -227,15 +231,29 @@ class Actindo_Components_Util {
         }
         else {
             $whereFilters = $filters['filter'];
-            
             if(!empty($filters['sortColName'])) {
-                if(isset($columnMap[$filters['sortColName']])) {
+            	/**
+            	 * CON-342
+				 * Sortout Kurzname filter, as it has two fields to sort for
+				 */
+                if($filters['sortColName'] == 'kurzname')
+                {
+                    if(!empty($filters['sortOrder']))
+                    {
+                        $sortOrder = $filters['sortOrder'];
+                    }
+                    $query['order'][] = $columnMap['vorname'] .' '.$sortOrder;
+                    $query['order'][] = $columnMap['name'] .' '.$sortOrder;
+                }
+                elseif(isset($columnMap[$filters['sortColName']])) 
+            	{
                     $order = $columnMap[$filters['sortColName']];
-                    if(!empty($filters['sortOrder'])) {
+                    if(!empty($filters['sortOrder'])) 
+                    {
                         $order .= ' ' . $filters['sortOrder'];
                     }
-                    $query['order'][] = $order;
-                }
+                	$query['order'][] = $order;
+            	}
             }
 
             if(!empty($filters['start'])) {
