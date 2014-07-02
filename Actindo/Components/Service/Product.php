@@ -172,7 +172,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $whereClause = Shopware()->Db()->quoteInto('WHERE `sa`.`id` = ?', $articleID);
         }
         //add where clause handling
-        if(empty($whereClause)){
+        if(empty($whereClause))
+        {
             //get Alternative Filter Sysle
             $filters = Actindo_Components_Util::createQueryFromFilters($filters,array('ordernumber'=>'`sa`.`id`','products_id'=>'`sa`.`id`'));
             //implode the data
@@ -211,7 +212,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'last_modified'   => $this->util->datetimeToTimestamp($article['changetime']),
             );
             //is 1 if we only query an single result set
-            if(count($resultCount)===1){
+            if(count($resultCount) === 1 )
+            {
                 $products[0] = $products[$id];
             }
             if(!empty($article['variants'])) {
