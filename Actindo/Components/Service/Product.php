@@ -1007,7 +1007,13 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVairantArticleId.' WHERE id='.(int)$articleID.';';
                     Shopware()->Db()->query($sql);
                     //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
-                    $articles->update($articleID, $update);
+                    try{
+                        $articles->update($articleID, $update);
+                    }catch(\Exception $ex){
+                        //it seems that the API sometimes throws even at this point an exception which leeds to a not really existing duplicate entry exception
+                        //as of this try to catch it an last time!
+                        $articles->update($articleID, $update);
+                    }
                 }
                 else
                 {
