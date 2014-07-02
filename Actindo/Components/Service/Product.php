@@ -2223,7 +2223,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     foreach($languages as $language)
                     {
                     	//add translation only if it is not the default translation
-                        if((int)$language['language_id'] !== (int)$defaultLanguageID)
+                        if((int)$language['language_id'] !== (int)$defaultLanguageID && !empty($images[$result['main']]['image_title'][$language['language_code']]))
                         {
                         	//prepare Translation Data
                             $data = array(
