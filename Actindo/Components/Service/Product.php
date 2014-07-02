@@ -212,7 +212,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'last_modified'   => $this->util->datetimeToTimestamp($article['changetime']),
             );
             //is 1 if we only query an single result set
-            if(count($resultCount) === 1 )
+            if($resultCount === 1 )
             {
                 $products[0] = $products[$id];
             }
