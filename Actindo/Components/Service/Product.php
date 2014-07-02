@@ -151,7 +151,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     
     /**
      * returns an article listing
-     * 
+     * Bug Fix @CON-366
+     * added Actindo_Components_Util::createQueryFromFilters function call to parse filter
+     * Also added an return array correction to return the correct format that actindo expects
      * @param int $offset offset to start the list with
      * @param int $limit maximum amount of items in the returned list
      * @param array $filters an array of filters to apply to the list query
@@ -160,7 +162,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     protected function exportList($offset, $limit, $filters) {
         $offset = isset($filters['start']) ? (int) $filters['start'] : $offset;
         $limit  = isset($filters['limit']) ? (int) $filters['limit'] : $limit;
-        
         $whereClause = '';
         if(!empty($filters['ordernumber'])) {
             try {
@@ -170,8 +171,14 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             }
             $whereClause = Shopware()->Db()->quoteInto('WHERE `sa`.`id` = ?', $articleID);
         }
-
-        $result = Shopware()->Db()->fetchAll(sprintf('
+        //add where clause handling
+        if(empty($whereClause)){
+            //get Alternative Filter Sysle
+            $filters = Actindo_Components_Util::createQueryFromFilters($filters,array('ordernumber'=>'`sa`.`id`','products_id'=>'`sa`.`id`'));
+            //implode the data
+            $whereClause = 'WHERE '.implode(' and ',$filters['where']);
+        }
+        $sql = sprintf('
             SELECT `sa`.`id`, `sa`.`active`, `sad`.`ordernumber`, `name`, `datum`, `changetime`, `configurator_set_id` AS `variants`,
                 (SELECT `categoryID`
                  FROM `s_articles_categories` `sac`
@@ -185,10 +192,12 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             ORDER BY `sa`.`id`
             LIMIT %d
             OFFSET %d
-        ', $limit, $offset));
+        ', $limit, $offset);
+        $result = Shopware()->Db()->fetchAll($sql);
 
         $products = array();
         $variantIds = array();
+        $resultCount = count($result);
         while($article = array_shift($result)) {
             $id = (int) $article['id'];
             $products[$id] = array(
@@ -201,6 +210,10 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'created'         => $this->util->datetimeToTimestamp($article['datum']),
                 'last_modified'   => $this->util->datetimeToTimestamp($article['changetime']),
             );
+            //is 1 if we only query an single result set
+            if(count($resultCount)===1){
+                $products[0] = $products[$id];
+            }
             if(!empty($article['variants'])) {
                 $variantIds[] = $id;
             }
