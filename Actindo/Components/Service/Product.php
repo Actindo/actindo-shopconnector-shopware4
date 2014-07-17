@@ -152,7 +152,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     /**
      * returns an article listing
      * Bug Fix @CON-366
-     * added Actindo_Components_Util::createQueryFromFilters function call to parse filter
+     * added wActindo_Components_Util::createQueryFromFilters function call to parse filter
      * Also added an return array correction to return the correct format that actindo expects
      * @param int $offset offset to start the list with
      * @param int $limit maximum amount of items in the returned list
@@ -1682,7 +1682,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _updateVariantDetails(&$product, &$update, $articleID) {
         // should always be set & an array here: $product['shop']['attributes']['combination_advanced'] 
-        
         $languages = $this->util->getLanguages();
         $defaultLanguageId = $this->util->getDefaultLanguage();
         $defaultLanguage = $languages[$defaultLanguageId]['language_code'];
@@ -1732,6 +1731,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 // @todo update variant with product info
             }
         }
+        $i = 0;
         $activeDetailIDs = array(); // all s_article_details that are not in here are removed from db after this loop
         foreach($product['shop']['attributes']['combination_advanced'] AS $ordernumber => &$variant) {
             if(!isset($matchingVariants[$ordernumber])) {
@@ -1755,19 +1755,73 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             }
             
             $data = array_merge($update['mainDetail'], array(
-                'id'           => $variantID,
-                'active'       => (bool) $variant['data']['products_status'],
+                'id'             => $variantID,
+                'active'         => (bool) $variant['data']['products_status'],
                 'additionalText' => implode(' / ', $optionValues),
-                'ean'          => $variant['shop']['art']['products_ean'],
-                'inStock'      => (int) $variant['l_bestand'],
-                'isMain'       => ($i++ == 0),
-                'number'       => $ordernumber,
-                'shippingTime' => max(0, (int) $variant['data']['shipping_status'] - 1),
-                'weight'       => $variant['shop']['art']['products_weight'],
+                'ean'            => $variant['shop']['art']['products_ean'],
+                'inStock'        => (int) $variant['l_bestand'],
+                'isMain'         => ($i++ == 0),
+                'number'         => $ordernumber,
+                'shippingTime'   => max(0, (int) $variant['data']['shipping_status'] - 1),
+                'weight'         => $variant['shop']['art']['products_weight'],
             ));
+
             $this->_updatePrices($variant['preisgruppen'], $data, $this->util->findTaxRateById($update['taxId']));
             $this->_updateVariantDetailProperties($variant['shop']['properties'], $data);
-            
+            /**
+             * @CON-325 modification
+             * Adding Support for Variant Data (from Actindo "Webshop" tab)
+             */
+            $variantShop = $variant['shop']['art'];
+            if(isset($variantShop['height']) )
+            {
+                $data['height'] = $variantShop['height'];
+            }
+            if(isset($variantShop['length']))
+            {
+                $data['len'] = $variantShop['length'];
+            }
+            if(isset($variantShop['width']))
+            {
+                $data['width'] = $variantShop['width'];
+            }
+            if(isset($variantShop['suppliernumber']))
+            {
+                $data['suppliernumber'] = $variantShop['suppliernumber'];
+            }
+            if(isset($variantShop['shipping_free']))
+            {
+                $data['shippingFree'] = (bool)$variantShop['shipping_free'];
+            }
+            if(isset($variantShop['shipping_status']))
+            {
+                $data['shippingTime'] = max(0, (int) $variantShop['shipping_status'] - 1);
+            }
+            if(isset($variantShop['releaseDate']))
+            {
+                try {
+                    $releaseDate = new DateTime($variantShop['products_date_available']);
+                    $releaseDate = $releaseDate->format(DateTime::ISO8601);
+                } catch(Exception $e) {
+                    $releaseDate = null;
+                }
+                $data['releaseDate'] = $releaseDate;
+            }
+            if(isset($variantShop['products_vpe_status'])) {
+                $vpeData = array('mainDetail'=>array());
+                $variantShopData = array('shop'=>array('art'=>$variantShop));
+                $this->_updateVPE($variant,$vpeData);
+                if(is_array($vpeData) && count($vpeData)>0){
+                    $data = array_merge($data,$vpeData['mainDetail']);
+                }
+            }
+            if(isset($variantShop['products_weight']))
+            {
+                if(floatval($variantShop['products_weight']) != floatval(0)) {
+                    $weight = (float) $variantShop['products_weight'];
+                }
+                $data['weight'] = $weight;
+            }
             $update['variants'][] = $data;
         }
         if(count($activeDetailIDs)) {
