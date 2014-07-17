@@ -266,6 +266,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             {
                 $parentArticleStock += (int) $articleDetail['inStock'];
             }
+            $parentArticleStock += (int) $articleMainDetails['inStock'];
         }
         //else use regular stock field
         else
@@ -345,6 +346,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_exportProperties($article, $response);
         $this->_exportTranslations($article, $response);
         $this->_exportVariants($article, $response);
+        Actindo_Components_Util::log2disk(Actindo_Components_Util::dump($response));
         return array('ok' => 'true', 'products' => array($response));
     }
     
