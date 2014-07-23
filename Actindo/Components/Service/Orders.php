@@ -211,6 +211,15 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                 WHERE `orderID` = %d
                     AND `modus` = 3
             ', $order['id']));
+
+            $ref = Enlight()->Events()->filter(
+                'Actindo_Connector_Service_Orders_getList_filterOrder',
+                $ref,
+                array(
+                    'subject' => $this,
+                    'id'      => $order['id'],
+                )
+            );
         }
 
         $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
