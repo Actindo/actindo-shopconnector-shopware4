@@ -17,6 +17,7 @@
 class Actindo_Components_Service_Orders extends Actindo_Components_Service {
     private static $paymentMap = array(
         'debit'         => 'L',
+        'sepa'         => 'LSCORE',
         'cash'          => 'NN',
         'invoice'       => 'U',
         'prepayment'    => 'VK',
@@ -183,7 +184,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                 $ref['webshop_order_time'] = '00:00:00';
             }
             $ref['val_date'] = $ref['bill_date'];
-            
+
             $ref['customer']['verf'] = isset(self::$paymentMap[$ref['_payment_method']]) ? self::$paymentMap[$ref['_payment_method']] : 'VK';
             switch($ref['customer']['verf']) {
                 case 'L':
@@ -196,6 +197,25 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                     }
                     if(!in_array($customer['debit']['accountHolder'], array('', 'Inhaber'))) {
                         $ref['customer']['kto_inhaber'] = $customer['debit']['accountHolder'];
+                    }
+                break;
+                case 'LSCORE':
+                    $customer['paymentData'] = (array)$customer['paymentData'];
+                    if(count($customer['paymentData']))
+                    {
+                        foreach($customer['paymentData'] as $paymentData)
+                        {
+                            if(isset($paymentData['bic']) && !empty($paymentData['bic']) && isset($paymentData['iban']) && !empty($paymentData['iban']))
+                            {
+                                $ref['customer']['iban'] = (string)$paymentData['iban'];
+                                $ref['customer']['swift'] = (string)$paymentData['bic'];
+                                if(!in_array((string)$paymentData['accountHolder'], array('', 'Inhaber')))
+                                {
+                                    $ref['customer']['kto_inhaber'] = (string)$paymentData['accountHolder'];
+                                }
+                                break;
+                            }
+                        }
                     }
                 break;
                 case 'PP': // paypal

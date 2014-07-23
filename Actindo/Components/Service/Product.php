@@ -101,19 +101,33 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @return array
      */
     public function get($categoryID, $ordernumber, $language, $justList, $offset, $limit, $filters) {
-        if(empty($ordernumber)) {
-            // return an article listing
-            return $this->exportList($offset, $limit, $filters);
-        }
-        elseif(!empty($justList)) {
+        if(!empty($justList))
+        {
             // $ordernumber given but $justList requested, get "list" of just that product
             $filters = array_merge($filters, array(
                 'ordernumber' => $ordernumber
             ));
             return $this->exportList($offset, $limit, $filters);
         }
-        // export all details of a single product
-        return $this->exportProduct($ordernumber, $language);
+        if(empty($ordernumber))
+        {
+            $ordernumber = $filters['filter'];
+            $ordernumber = array_shift($ordernumber);
+            if($ordernumber['field']=='products_id')
+            {
+                $ordernumber = $ordernumber['data']['value'];
+            }
+        }
+        //only export it, if the ordner number can be found!
+        if(!empty($ordernumber))
+        {
+            // export all details of a single product
+            return $this->exportProduct($ordernumber, $language);
+        }
+        else
+        {
+            return $this->exportList($offset, $limit, $filters);
+        }
     }
     
     /**
@@ -240,7 +254,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     protected function exportProduct($articleID, $language) {
         $article = $this->resources->article->getOne($articleID);
         $articleMainDetails =& $article['mainDetail'];
-        
+
         $article['esd'] = Shopware()->Db()->fetchOne('SELECT count(*) FROM `s_articles_esd` WHERE `articleID` = ?', array($article['id']));
         $unit = $this->util->getVPEs($articleMainDetails['unitId']);
         //CON-287
@@ -252,6 +266,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             {
                 $parentArticleStock += (int) $articleDetail['inStock'];
             }
+            $parentArticleStock += (int) $articleMainDetails['inStock'];
         }
         //else use regular stock field
         else
