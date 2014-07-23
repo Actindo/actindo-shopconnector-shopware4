@@ -266,6 +266,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             {
                 $parentArticleStock += (int) $articleDetail['inStock'];
             }
+            $parentArticleStock += (int) $articleMainDetails['inStock'];
         }
         //else use regular stock field
         else
