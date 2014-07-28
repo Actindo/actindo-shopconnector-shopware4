@@ -152,7 +152,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
     /**
      * returns an article listing
      * Bug Fix @CON-366
-     * added wActindo_Components_Util::createQueryFromFilters function call to parse filter
+     * added Actindo_Components_Util::createQueryFromFilters function call to parse filter
      * Also added an return array correction to return the correct format that actindo expects
      * @param int $offset offset to start the list with
      * @param int $limit maximum amount of items in the returned list
@@ -1681,7 +1681,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param int $articleID the article id to operate on
      */
     protected function _updateVariantDetails(&$product, &$update, $articleID) {
-        // should always be set & an array here: $product['shop']['attributes']['combination_advanced'] 
+        // should always be set & an array here: $product['shop']['attributes']['combination_advanced']
+
         $languages = $this->util->getLanguages();
         $defaultLanguageId = $this->util->getDefaultLanguage();
         $defaultLanguage = $languages[$defaultLanguageId]['language_code'];
@@ -1774,7 +1775,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             if(isset($variantShop['products_pseudoprices']))
             {
                 $pseudoprice = $variantShop['products_pseudoprices'];
-            }else{
+            }
+            else
+            {
                 $pseudoprice = array();
             }
             $this->_updatePrices(
@@ -1810,30 +1813,38 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             }
             if(isset($variantShop['products_date_available']))
             {
-                try {
+                try
+                {
                     $releaseDate = new DateTime($variantShop['products_date_available']);
                     $releaseDate = $releaseDate->format(DateTime::ISO8601);
-                } catch(Exception $e) {
-                    if((int)$variantShop['products_date_available']>0)
+                }
+                catch(Exception $e)
+                {
+                    if((int)$variantShop['products_date_available'] > 0)
                     {
                         $releaseDate = date(DateTime::ISO8601,$variantShop['products_date_available']);
-                    }else{
+                    }
+                    else
+                    {
                         $releaseDate = null;
                     }
                 }
                 $data['releaseDate'] = $releaseDate;
             }
-            if(isset($variantShop['products_vpe_status'])) {
+            if(isset($variantShop['products_vpe_status']))
+            {
                 $vpeData = array('mainDetail'=>array());
                 $variantShopData = array('shop'=>array('art'=>$variantShop));
                 $this->_updateVPE($variant,$vpeData);
-                if(is_array($vpeData) && count($vpeData)>0){
+                if(is_array($vpeData) && count($vpeData) > 0)
+                {
                     $data = array_merge($data,$vpeData['mainDetail']);
                 }
             }
             if(isset($variantShop['products_weight']))
             {
-                if(floatval($variantShop['products_weight']) != floatval(0)) {
+                if(floatval($variantShop['products_weight']) != floatval(0))
+                {
                     $weight = (float) $variantShop['products_weight'];
                 }
                 $data['weight'] = $weight;
