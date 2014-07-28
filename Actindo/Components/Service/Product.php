@@ -1766,13 +1766,24 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'weight'         => $variant['shop']['art']['products_weight'],
             ));
 
-            $this->_updatePrices($variant['preisgruppen'], $data, $this->util->findTaxRateById($update['taxId']));
-            $this->_updateVariantDetailProperties($variant['shop']['properties'], $data);
             /**
              * @CON-325 modification
              * Adding Support for Variant Data (from Actindo "Webshop" tab)
              */
             $variantShop = $variant['shop']['art'];
+            if(isset($variantShop['products_pseudoprices']))
+            {
+                $pseudoprice = $variantShop['products_pseudoprices'];
+            }else{
+                $pseudoprice = array();
+            }
+            $this->_updatePrices(
+                $variant['preisgruppen'],
+                $data,
+                $this->util->findTaxRateById($update['taxId']),
+                $pseudoprice
+            );
+            $this->_updateVariantDetailProperties($variant['shop']['properties'], $data);
             if(isset($variantShop['height']) )
             {
                 $data['height'] = $variantShop['height'];
@@ -1797,13 +1808,18 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             {
                 $data['shippingTime'] = max(0, (int) $variantShop['shipping_status'] - 1);
             }
-            if(isset($variantShop['releaseDate']))
+            if(isset($variantShop['products_date_available']))
             {
                 try {
                     $releaseDate = new DateTime($variantShop['products_date_available']);
                     $releaseDate = $releaseDate->format(DateTime::ISO8601);
                 } catch(Exception $e) {
-                    $releaseDate = null;
+                    if((int)$variantShop['products_date_available']>0)
+                    {
+                        $releaseDate = date(DateTime::ISO8601,$variantShop['products_date_available']);
+                    }else{
+                        $releaseDate = null;
+                    }
                 }
                 $data['releaseDate'] = $releaseDate;
             }
