@@ -189,7 +189,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         if(empty($whereClause))
         {
             //get Alternative Filter Sysle
-            $filters = Actindo_Components_Util::createQueryFromFilters($filters,array('ordernumber'=>'`sa`.`id`','products_id'=>'`sa`.`id`'));
+            $filters = Actindo_Components_Util::createQueryFromFilters($filters,array('ordernumber'=>'`sa`.`id`','products_id'=>'`sa`.`id`','art_nr'=>'`sad`.`ordernumber`'));
             //implode the data
             $whereClause = 'WHERE '.implode(' and ',$filters['where']);
         }
