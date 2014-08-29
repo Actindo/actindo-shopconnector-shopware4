@@ -30,7 +30,7 @@ class Shopware_Plugins_Core_Actindo_Bootstrap extends Shopware_Components_Plugin
      * the version number MUST match this regex (in order for the update mechanism to work):
      * ^\d+\.\d+$
      */
-    const VERSION = '2.267';
+    const VERSION = '2.268';
     
     /**
      * the installed shopware version must be this or greater, otherwise this plugin won't install 
