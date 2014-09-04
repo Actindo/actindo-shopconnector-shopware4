@@ -227,7 +227,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             //CON-534
             //Payone Integration
             try{
-				$payOneResult = Shopware()->Db()->fetchRow('SELECT '.self::PAYONEFIELD.' FROM '.self::PAYONEDB.' WHERE orderID='.(int).';');
+				$payOneResult = Shopware()->Db()->fetchRow('SELECT '.self::PAYONEFIELD.' FROM '.self::PAYONEDB.' WHERE orderID='.(int)$order['id'].';');
 				if(
 					$payOneResult 
 					&& 
