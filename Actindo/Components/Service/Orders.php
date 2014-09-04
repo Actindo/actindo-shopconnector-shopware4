@@ -15,6 +15,8 @@
 
 
 class Actindo_Components_Service_Orders extends Actindo_Components_Service {
+	const PAYONEDB = 's_order_attributes';
+	const PAYONEFIELD = 'mopt_payone_txid';
     private static $paymentMap = array(
         'debit'         => 'L',
         'sepa'         => 'LSCORE',
@@ -222,6 +224,28 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                     // @todo
                 break;
             }
+            //CON-534
+            //Payone Integration
+            try{
+				$payOneResult = Shopware()->Db()->fetchRow('SELECT '.self::PAYONEFIELD.' FROM '.self::PAYONEDB.' WHERE orderID='.(int).';');
+				if(
+					$payOneResult 
+					&& 
+					$payOneResult!==null 
+					&& 
+					is_array($payOneResult) 
+					&& 
+					isset($payOneResult[self::PAYONEFIELD])
+				)
+				{
+					$ref['payment_type'] = 'payone';
+					$ref['payment_order_id'] = $payOneResult[self::PAYONEFIELD];
+				}
+			}
+			catch(\Exception $ex)
+			{
+					//do nothing, payone not installed!
+			}
             
             // to get order positions via api we'd have to use the getOne() call which fetches far too much information for this purpose
             // => do it manually
