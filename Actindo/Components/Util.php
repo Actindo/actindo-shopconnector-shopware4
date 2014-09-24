@@ -915,7 +915,12 @@ class Actindo_Components_Util {
         }
         return $this->vpeCache;
     }
-    
+
+    public static function isTableExists($tableName)
+    {
+        return (bool) count(Shopware()->Db()->fetchAll("SHOW TABLES LIKE " . Shopware()->Db()->quote($tableName) . ""));
+    }
+
     /**
      * checks if the given string is a valid url
      * 

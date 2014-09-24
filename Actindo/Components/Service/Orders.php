@@ -185,12 +185,15 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             }
             $ref['val_date'] = $ref['bill_date'];
 
-            $sql = 'SELECT payment_name, transactionId FROM Pi_klarna_payment_order_data WHERE order_number = ' . (int) $order['number'] . ';';
-            $result = Shopware()->Db()->fetchRow($sql);
-            if ($result !== false)
+            if (Actindo_Components_Util::isTableExists('Pi_klarna_payment_order_data'))
             {
-                $ref['webshop_order_klarna_pclass'] = $result['payment_name'];
-                $ref['webshop_order_klarna_order_id'] = $result['transactionId'];
+                $sql = 'SELECT payment_name, transactionId FROM Pi_klarna_payment_order_data WHERE order_number = ' . (int) $order['number'] . ';';
+                $result = Shopware()->Db()->fetchRow($sql);
+                if ($result !== false)
+                {
+                    $ref['webshop_order_klarna_pclass'] = $result['payment_name'];
+                    $ref['webshop_order_klarna_order_id'] = $result['transactionId'];
+                }
             }
 
             $ref['customer']['verf'] = isset(self::$paymentMap[$ref['_payment_method']]) ? self::$paymentMap[$ref['_payment_method']] : 'VK';
