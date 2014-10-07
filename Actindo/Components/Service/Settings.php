@@ -154,6 +154,7 @@ class Actindo_Components_Service_Settings extends Actindo_Components_Service {
         // multi shops
         $ret['multistores'] = $this->util->getMultiShops();
         
+		$ret = Actindo_Components_Util::ScanForNullAndCorrect($ret);
         return array(
             'ok' => true,
             'settings' => $ret

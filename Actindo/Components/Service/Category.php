@@ -36,6 +36,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
         foreach(array_keys($this->util->getLanguages()) AS $langID) {
             $result[$langID] =& $categoryTree;
         }
+        $result = Actindo_Components_Util::ScanForNullAndCorrect($result);
         return array('ok' => '1', 'categories' => $result);
     }
     
@@ -110,7 +111,9 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
                 }
             }else if(count($result)>1){ throw new Actindo_Components_Exception("Multiple Roots found! Not allowed");
             }else{ throw new Actindo_Components_Exception("No Root found!"); }
-            return $this->categories['children'];
+            $result = $this->categories['children'];
+			$result = Actindo_Components_Util::ScanForNullAndCorrect($result);
+            return $result;
         }else{
             $result = $this->getRepository()->getListQuery(array(), array(), null, null, false)->getArrayResult();
             
@@ -146,6 +149,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
             if($omitRoot) {
                 return $tree[0]['children'];
             }
+			$tree = Actindo_Components_Util::ScanForNullAndCorrect($tree);
             return $tree;
         }
     }
