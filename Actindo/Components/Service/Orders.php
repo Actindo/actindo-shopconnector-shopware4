@@ -340,7 +340,7 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             'menge'       => 1,
             'langtext'    => (string) $order['dispatch']['description'],
         );
-		$response = Actindo_Components_Util::ScanForNullAndCorrect($response);
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         
         return $response;
     }

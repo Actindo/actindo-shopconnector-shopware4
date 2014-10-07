@@ -164,7 +164,7 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
             
             $customers[] = $info;
         }
-		$customers = Actindo_Components_Util::ScanForNullAndCorrect($customers);
+        $customers = Actindo_Components_Util::ScanForNullAndCorrect($customers);
         
         return array(
             'ok' => true,
@@ -228,7 +228,7 @@ class Actindo_Components_Service_Customers extends Actindo_Components_Service {
                 '_customers_id' => (int) $customer['userID'],
             );
         }
-		$customers = Actindo_Components_Util::ScanForNullAndCorrect($customers);
+        $customers = Actindo_Components_Util::ScanForNullAndCorrect($customers);
         
         return array(
             'ok' => true,

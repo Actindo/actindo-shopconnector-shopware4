@@ -149,7 +149,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
             if($omitRoot) {
                 return $tree[0]['children'];
             }
-			$tree = Actindo_Components_Util::ScanForNullAndCorrect($tree);
+            $tree = Actindo_Components_Util::ScanForNullAndCorrect($tree);
             return $tree;
         }
     }
