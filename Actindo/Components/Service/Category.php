@@ -112,7 +112,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
             }else if(count($result)>1){ throw new Actindo_Components_Exception("Multiple Roots found! Not allowed");
             }else{ throw new Actindo_Components_Exception("No Root found!"); }
             $result = $this->categories['children'];
-			$result = Actindo_Components_Util::ScanForNullAndCorrect($result);
+            $result = Actindo_Components_Util::ScanForNullAndCorrect($result);
             return $result;
         }else{
             $result = $this->getRepository()->getListQuery(array(), array(), null, null, false)->getArrayResult();
