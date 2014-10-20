@@ -1056,6 +1056,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     Shopware()->Db()->query($sql);
                     //now set the main Article ID
                     $sql = 'UPDATE s_articles_details set kind=1 WHERE id='.(int)$firstVairantArticleId.';';
+                    Shopware()->Db()->query($sql);
                     //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
                     try
                     {
