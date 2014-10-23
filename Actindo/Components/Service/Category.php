@@ -93,7 +93,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
      * @throws Actindo_Components_Exception 
      */
     protected function getCategoryTree($omitRoot = true) {
-        if(!version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=')) {
+        if(version_compare(Shopware()->Config()->sVERSION, '4.0.8', '>=')) {
             $this->categories = array();
             $result = $this->getRepository()->getListQuery(array('parent'=>null), array(), null, null, false)->getArrayResult();
             if(count($result)==1){
