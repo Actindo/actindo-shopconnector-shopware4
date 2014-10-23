@@ -1120,6 +1120,17 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         }
         // Clean Up vacant Image Translations
         $this->cleanupImageTranslations();
+
+
+        Enlight()->Events()->notify(
+            'Actindo_Connector_Service_Product_updateProduct_finished',
+            array(
+                'subject'   => $this,
+                'articleID' => $articleID,
+                'product'   => $product,
+            )
+        );
+        
         return array('ok' => true, 'success' => 1);
     }
     
