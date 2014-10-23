@@ -158,6 +158,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $response = $this->_importStock($product);
         }
         
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         return $response;
     }
     
@@ -241,6 +242,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 $products[$id]['art_nr'] = $ordernumber;
             }
         }
+        $products = Actindo_Components_Util::ScanForNullAndCorrect($products);
         return array('ok' => true, 'products' => $products);
     }
     
@@ -346,6 +348,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_exportProperties($article, $response);
         $this->_exportTranslations($article, $response);
         $this->_exportVariants($article, $response);
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         return array('ok' => 'true', 'products' => array($response));
     }
     
@@ -1120,7 +1123,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         }
         // Clean Up vacant Image Translations
         $this->cleanupImageTranslations();
-
+        $this->setStandartArticle($articleID,$product);
 
         Enlight()->Events()->notify(
             'Actindo_Connector_Service_Product_updateProduct_finished',
@@ -2394,4 +2397,39 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         //execute Query
         Shopware()->Db()->query($sql);
     }
+    /**
+     * Set Standart Article
+     * @param $articleID integer Article ID
+     * @param $product array Product Data
+     */
+    protected function setStandartArticle($articleID,$product)
+    {
+		if(count($product['shop']['attributes']['combination_advanced']) > 0)
+		{
+			$mainVariantArtNr = null;
+			foreach($product['shop']['attributes']['combination_advanced'] as $variantArtNr => $variantArticle)
+			{
+				if(isset($variantArticle['data']['products_is_standard']) && $variantArticle['data']['products_is_standard']=='1'){
+					$mainVariantArtNr = $variantArtNr;
+					break;
+				}
+			}
+			if($mainVariantArtNr !== null)
+			{
+				$sql = 'SELECT id FROM s_articles_details WHERE ordernumber='.Shopware()->Db()->quote($mainVariantArtNr).';';
+				$result = Shopware()->Db()->query($sql);
+				$mainVariantId = $result->fetch(PDO::FETCH_ASSOC);
+				$mainVariantId = $mainVariantId['id'];
+				//now set the main variant
+				$sql = 'UPDATE s_articles SET main_detail_id='.(int)$mainVariantId.' WHERE id='.(int)$articleID.';';
+				Shopware()->Db()->query($sql);
+				//Reset Kinds
+				$sql = 'UPDATE s_articles_details set kind=2 WHERE articleID='.(int)$articleID.';';
+				Shopware()->Db()->query($sql);
+				//now set the main Article ID
+				$sql = 'UPDATE s_articles_details set kind=1 WHERE id='.(int)$mainVariantId.';';
+				Shopware()->Db()->query($sql);
+			}
+		}
+	}
 }
