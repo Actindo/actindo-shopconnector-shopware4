@@ -46,7 +46,7 @@ class Actindo_Components_Service_Actindo extends Actindo_Components_Service {
             ob_end_clean();
             $arr['phpinfo'] = new Zend_XmlRpc_Value_Base64($c);
         }
-        
+        $arr = Actindo_Components_Util::ScanForNullAndCorrect($arr);
         return $arr;
     }
     
@@ -73,6 +73,7 @@ class Actindo_Components_Service_Actindo extends Actindo_Components_Service {
         $diff = abs($diff);
         $arr['diff'] = ($diff_neg ? '-' : '') . sprintf('%02d:%02d:%02d', floor($diff / 3600), floor(($diff % 3600) / 60), $diff % 60);
         
+        $arr = Actindo_Components_Util::ScanForNullAndCorrect($arr);
         return $arr;
     }
     

@@ -158,6 +158,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
             $response = $this->_importStock($product);
         }
         
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         return $response;
     }
     
@@ -241,6 +242,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 $products[$id]['art_nr'] = $ordernumber;
             }
         }
+        $products = Actindo_Components_Util::ScanForNullAndCorrect($products);
         return array('ok' => true, 'products' => $products);
     }
     
@@ -346,6 +348,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_exportProperties($article, $response);
         $this->_exportTranslations($article, $response);
         $this->_exportVariants($article, $response);
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
         return array('ok' => 'true', 'products' => array($response));
     }
     
