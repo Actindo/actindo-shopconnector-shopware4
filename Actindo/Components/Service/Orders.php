@@ -96,9 +96,9 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
         $response = array();
         while($order = array_shift($list['data'])) {
             if($order['orderStatusId']<0)continue;
-			$completeOrder = $orders->getOne($order['id']);
-			$customerBilling = $completeOrder['billing'];
-			$customerShipping = $completeOrder['shipping'];
+            $completeOrder = $orders->getOne($order['id']);
+            $customerBilling = $completeOrder['billing'];
+            $customerShipping = $completeOrder['shipping'];
             try {
                 $customer = $this->_getCustomerById($order['customerId']);
                 $customerGroup = $this->util->findCustomerGroupByKey($customer['groupKey']);
