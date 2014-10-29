@@ -96,6 +96,9 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
         $response = array();
         while($order = array_shift($list['data'])) {
             if($order['orderStatusId']<0)continue;
+            $completeOrder = $orders->getOne($order['id']);
+            $customerBilling = $completeOrder['billing'];
+            $customerShipping = $completeOrder['shipping'];
             try {
                 $customer = $this->_getCustomerById($order['customerId']);
                 $customerGroup = $this->util->findCustomerGroupByKey($customer['groupKey']);
@@ -139,37 +142,37 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                 'tstamp'            => '', // set below array definition 
                 
                 'customer' => array(
-                    'anrede'       => (string) $this->util->getSalutation($customer['billing']['salutation']),
-                    'kurzname'     => !empty($customer['billing']['company']) ? $customer['billing']['company'] : sprintf('%s, %s', $customer['billing']['lastName'], $customer['billing']['firstName']),
-                    'firma'        => (string) $customer['billing']['company'],
-                    'name'         => (string) $customer['billing']['lastName'],
-                    'vorname'      => (string) $customer['billing']['firstName'],
-                    'adresse'      => $customer['billing']['street'] . ' ' . str_replace(' ', '', $customer['billing']['streetNumber']),
-                    'adresse2'     => (string) $customer['billing']['department'],
-                    'plz'          => (string) $customer['billing']['zipCode'],
-                    'ort'          => (string) $customer['billing']['city'],
+                    'anrede'       => (string) $this->util->getSalutation($customerBilling['salutation']),
+                    'kurzname'     => !empty($customerBilling['company']) ? $customerBilling['company'] : sprintf('%s, %s', $customerBilling['lastName'], $customerBilling['firstName']),
+                    'firma'        => (string) $customerBilling['company'],
+                    'name'         => (string) $customerBilling['lastName'],
+                    'vorname'      => (string) $customerBilling['firstName'],
+                    'adresse'      => $customerBilling['street'] . ' ' . str_replace(' ', '', $customerBilling['streetNumber']),
+                    'adresse2'     => (string) $customerBilling['department'],
+                    'plz'          => (string) $customerBilling['zipCode'],
+                    'ort'          => (string) $customerBilling['city'],
                     'land'         => $billingCountryIso,
-                    'tel'          => (string) $customer['billing']['phone'],
-                    'fax'          => (string) $customer['billing']['fax'],
-                    'ustid'        => (string) $customer['billing']['vatId'],
+                    'tel'          => (string) $customerBilling['phone'],
+                    'fax'          => (string) $customerBilling['fax'],
+                    'ustid'        => (string) $customerBilling['vatId'],
                     'email'        => (string) $customer['email'],
                     'preisgruppe'  => (int) $customerGroup['id'],
                     'gebdat'       => ($customer['billing']['birthday'] instanceof DateTime) ? $customer['billing']['birthday']->format('Y-m-d') : '0000-00-00',
                     'print_brutto' => $order['net'] ? 0 : 1,
                 ),
                 'delivery' => array(
-                    'anrede'   => (string) $this->util->getSalutation($customer['shipping']['salutation']),
-                    'firma'    => (string) $customer['shipping']['company'],
-                    'name'     => (string) $customer['shipping']['lastName'],
-                    'vorname'  => (string) $customer['shipping']['firstName'],
-                    'adresse'  => $customer['shipping']['street'] . ' ' . str_replace(' ', '', $customer['shipping']['streetNumber']),
-                    'adresse2' => (string) $customer['shipping']['department'],
-                    'plz'      => (string) $customer['shipping']['zipCode'],
-                    'ort'      => (string) $customer['shipping']['city'],
+                    'anrede'   => (string) $this->util->getSalutation($customerShipping['salutation']),
+                    'firma'    => (string) $customerShipping['company'],
+                    'name'     => (string) $customerShipping['lastName'],
+                    'vorname'  => (string) $customerShipping['firstName'],
+                    'adresse'  => $customerShipping['street'] . ' ' . str_replace(' ', '', $customerShipping['streetNumber']),
+                    'adresse2' => (string) $customerShipping['department'],
+                    'plz'      => (string) $customerShipping['zipCode'],
+                    'ort'      => (string) $customerShipping['city'],
                     'land'     => $shippingCountryIso,
-                    'tel'      => (string) $customer['billing']['phone'],
-                    'fax'      => (string) $customer['billing']['fax'],
-                    'ustid'    => (string) $customer['billing']['vatId'],
+                    'tel'      => (string) $customerBilling['billing']['phone'],
+                    'fax'      => (string) $customerBilling['billing']['fax'],
+                    'ustid'    => (string) $customerBilling['billing']['vatId'],
                 ),
             );
             
