@@ -190,7 +190,11 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         if(empty($whereClause))
         {
             //get Alternative Filter Sysle
-            $filters = Actindo_Components_Util::createQueryFromFilters($filters,array('ordernumber'=>'`sa`.`id`','products_id'=>'`sa`.`id`','art_nr'=>'`sad`.`ordernumber`'));
+            $filters = Actindo_Components_Util::createQueryFromFilters($filters, array(
+                'art_nr'      => '`saa`.`actindo_masternumber`',
+                'ordernumber' => '`saa`.`actindo_masternumber`',
+                'products_id' => '`sa`.`id`',
+            ));
             //implode the data
             $whereClause = 'WHERE '.implode(' and ',$filters['where']);
         }
@@ -204,6 +208,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                  LIMIT 1) AS `categoryID`
             FROM `s_articles` `sa`
             INNER JOIN `s_articles_details` `sad` ON `sad`.`articleID` = `sa`.`id` AND `sad`.`kind` = 1
+            INNER JOIN `s_articles_attributes` `saa` ON `saa`.`articledetailsID` = `sad`.`id`
             ' . $whereClause . '
             ORDER BY `sa`.`id`
             LIMIT %d
