@@ -1025,6 +1025,18 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateVPE($product, $update);
         $this->_updateVariants($product, $update, $articleID);
         $articles = $this->resources->article;
+        /**
+         * Enlight Filter Event
+         */
+        $update = Enlight_Application::Instance()->Events()->filter(
+            'ActindoConnector_Product_Update_ArticleFilter',
+            $update,
+            array(
+                'subject'=>$this,
+                'id'=>$articleID,
+                'product'=>$product
+            )
+        );
         try
         {
             $articles->update($articleID, $update);
@@ -1040,9 +1052,18 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $firstVariantArticleNumber = current(array_keys($product['shop']['attributes']['combination_advanced']));
                     $sql = 'SELECT id FROM s_articles_details WHERE ordernumber='.Shopware()->Db()->quote($firstVariantArticleNumber);
                     $result = Shopware()->Db()->query($sql);
-                    $firstVairantArticleId = $result->fetch(PDO::FETCH_ASSOC);
-                    $firstVairantArticleId = $firstVairantArticleId['id'];
-                    $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVairantArticleId.' WHERE id='.(int)$articleID.';';
+                    $firstVariantArticleId = $result->fetch(PDO::FETCH_ASSOC);
+                    $firstVariantArticleId = $firstVairantArticleId['id'];
+                    /**
+                     * Clean Up DB 
+                     */
+                    $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVariantArticleId.' WHERE id='.(int)$articleID.';';
+                    Shopware()->Db()->query($sql);
+                    //Reset Kinds
+                    $sql = 'UPDATE s_articles_details set kind=2 WHERE articleID='.(int)$articleID.';';
+                    Shopware()->Db()->query($sql);
+                    //now set the main Article ID
+                    $sql = 'UPDATE s_articles_details set kind=1 WHERE id='.(int)$firstVariantArticleId.';';
                     Shopware()->Db()->query($sql);
                     //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
                     try
