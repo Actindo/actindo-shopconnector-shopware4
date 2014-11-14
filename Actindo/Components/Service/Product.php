@@ -1044,18 +1044,18 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     $firstVariantArticleNumber = current(array_keys($product['shop']['attributes']['combination_advanced']));
                     $sql = 'SELECT id FROM s_articles_details WHERE ordernumber='.Shopware()->Db()->quote($firstVariantArticleNumber);
                     $result = Shopware()->Db()->query($sql);
-                    $firstVairantArticleId = $result->fetch(PDO::FETCH_ASSOC);
-                    $firstVairantArticleId = $firstVairantArticleId['id'];
+                    $firstVariantArticleId = $result->fetch(PDO::FETCH_ASSOC);
+                    $firstVariantArticleId = $firstVairantArticleId['id'];
                     /**
                      * Clean Up DB 
                      */
-                    $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVairantArticleId.' WHERE id='.(int)$articleID.';';
+                    $sql = 'UPDATE s_articles SET main_detail_id='.(int)$firstVariantArticleId.' WHERE id='.(int)$articleID.';';
                     Shopware()->Db()->query($sql);
                     //Reset Kinds
                     $sql = 'UPDATE s_articles_details set kind=2 WHERE articleID='.(int)$articleID.';';
                     Shopware()->Db()->query($sql);
                     //now set the main Article ID
-                    $sql = 'UPDATE s_articles_details set kind=1 WHERE id='.(int)$firstVairantArticleId.';';
+                    $sql = 'UPDATE s_articles_details set kind=1 WHERE id='.(int)$firstVariantArticleId.';';
                     Shopware()->Db()->query($sql);
                     //trigger update again, it will continue without doing the complete update process (only the stuff that has not been created so far
                     try
