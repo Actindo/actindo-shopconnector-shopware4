@@ -339,11 +339,23 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             if($position['mode'] == 0 || $position['mode'] == 1) { // article (regular or premium)
                 // @todo variant handling
             }
+
+            $item = Enlight()->Events()->filter(
+                'Actindo_Connector_Service_Orders_listPosition_filterPosition',
+                $item,
+                array(
+                    'subject'      => $this,
+                    'ordernumber'  => $position['articleNumber'],
+                    'position'     => $position,
+                    'order'        => $order,
+                )
+            );
+            
             $response[] = $item;
         }
         
         // append shipping costs
-        $response[] = array(
+        $shippingCostsPosition = array(
             'art_nr'      => sprintf('SHIPPING%d', $order['dispatch']['id']),
             'art_nr_base' => sprintf('SHIPPING%d', $order['dispatch']['id']),
             'art_name'    => (string) $order['dispatch']['name'],
@@ -354,8 +366,31 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             'menge'       => 1,
             'langtext'    => (string) $order['dispatch']['description'],
         );
-        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);
+
+        $shippingCostsPosition = Enlight()->Events()->filter(
+            'Actindo_Connector_Service_Orders_listPosition_filterShippingCostsPosition',
+            $shippingCostsPosition,
+            array(
+                'subject'   => $this,
+                'order'     => $order,
+                'positions' => $order['details'],
+            )
+        );
+
+        $response[] = $shippingCostsPosition;
+
+
+        $response = Enlight()->Events()->filter(
+            'Actindo_Connector_Service_Orders_listPosition_filterPositions',
+            $response,
+            array(
+                'subject'   => $this,
+                'order'     => $order,
+                'positions' => $order['details'],
+            )
+        );
         
+        $response = Actindo_Components_Util::ScanForNullAndCorrect($response);        
         return $response;
     }
     

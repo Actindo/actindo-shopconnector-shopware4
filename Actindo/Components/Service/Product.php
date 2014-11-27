@@ -1025,6 +1025,15 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         $this->_updateVPE($product, $update);
         $this->_updateVariants($product, $update, $articleID);
         $articles = $this->resources->article;
+        $update = Enlight_Application::Instance()->Events()->filter(
+            'ActindoConnector_Product_Update_ArticleFilter',
+            $update,
+            array(
+                'subject'=>$this,
+                'id'=>$articleID,
+                'product'=>$product
+            )
+        );
         try
         {
             $articles->update($articleID, $update);
@@ -1136,6 +1145,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'subject'   => $this,
                 'articleID' => $articleID,
                 'product'   => $product,
+                'update'    => $update,
             )
         );
         
