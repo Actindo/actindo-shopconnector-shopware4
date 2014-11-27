@@ -174,4 +174,17 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
             $this->cacheFile = $cacheFile;
         }
     }
+
+    /**
+     * deletes the xmlrpc cache file (it will be regenerated automatically on the next call)
+     *
+     * @return bool true on success, false on failure
+     */
+    public function purgeCacheFile()
+    {
+        if($this->cacheFile !== null)
+        {
+            return @unlink($this->cacheFile);
+        }
+    }
 }
