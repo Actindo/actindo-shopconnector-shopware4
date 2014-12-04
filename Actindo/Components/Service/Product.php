@@ -83,6 +83,15 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
         $articles = $this->resources->article;
         $articles->delete($articleID);
+
+        Enlight()->Events()->notify(
+            'Actindo_Connector_Service_Product_Deleted',
+            array(
+                'subject'   => $this,
+                'articleID' => $articleID,
+            )
+        );
+        
         return array('ok' => true);
     }
     
@@ -900,6 +909,15 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 ),
             ));
         }
+
+        Enlight()->Events()->notify(
+            'Actindo_Connector_Service_Product_StockUpdated',
+            array(
+                'subject'   => $this,
+                'articleID' => $articleID,
+            )
+        );
+        
         return array('ok' => true);
     }
     
