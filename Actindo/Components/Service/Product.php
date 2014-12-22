@@ -156,9 +156,17 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 'failed'  => array(),
             );
             foreach($product AS $key => $item) {
-                $result = $this->_importStock($item);
-                if(!$response['success'][$key] = $result['ok']) {
-                    $response['failed'][$key] = $result;
+                try
+                {
+                    $result = $this->_importStock($item);
+                    if(!$response['success'][$key] = $result['ok']) {
+                        $response['failed'][$key] = $result;
+                    }
+                }
+                catch(\Exception $e)
+                {
+                    $response['success'][$key] = 0;
+                    $response['failed'][$key] = array('ok' => 0, 'errno' => 2, 'error' => $e->getMessage());
                 }
             }
         }
