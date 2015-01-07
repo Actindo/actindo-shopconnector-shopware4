@@ -155,7 +155,7 @@ class Shopware_Plugins_Core_Actindo_Bootstrap extends Shopware_Components_Plugin
         foreach(get_class_methods($this) AS $method) {
             if(preg_match('/^_updateFrom(\d+_\d+)$/', $method, $matches)) { // method matches the update format
                 $version = str_replace('_', '.', $matches[1]);
-                if(version_compare($priorVersion, $version, '<=')) { // if prior plugin version is smaller or equal, call this update method
+                if(version_compare($version, $priorVersion, '>=')) { // if prior plugin version is greater or equal, call this update method
                     $updateMethods[$version] = $method;
                 }
             }
@@ -167,14 +167,14 @@ class Shopware_Plugins_Core_Actindo_Bootstrap extends Shopware_Components_Plugin
                 return false;
             }
         }
-        
+
         // clear method definition cache
         if(!class_exists('Actindo_Components_XmlRpc_Server')) {
-            require_once(dirname(__FILE__) . '/Components/XmlRpc/Server.php');
+            require_once($this->Path() . 'Components/XmlRpc/Server.php');
         }
         $rpcServer = new Actindo_Components_XmlRpc_Server();
         $rpcServer->purgeCacheFile();
-        
+
         return true;
     }
     
@@ -224,7 +224,11 @@ class Shopware_Plugins_Core_Actindo_Bootstrap extends Shopware_Components_Plugin
     public function onGetControllerPathFrontendActindo(Enlight_Event_EventArgs $args) {
         return $this->Path() . '/Controllers/Frontend/Actindo.php';
     }
-    
+
+    /**
+     * called after a final order was saved to the database. If the plugin is configured to ping orders to
+     * actindo we'll send that remote call (synchronously!)
+     */
     public function onSaveOrder(Enlight_Hook_HookArgs $args) {
         if(!function_exists('curl_init')) {
             return; // tell admin?

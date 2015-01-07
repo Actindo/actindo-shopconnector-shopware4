@@ -23,7 +23,7 @@ class Shopware_Controllers_Frontend_Actindo extends Enlight_Controller_Action {
      * @param string $className the classname to load
      * @return boolean true if the class was found and loaded, otherwise false
      */
-    public function autoloader($className) {
+    public static function autoloader($className) {
         $pieces = explode('_', $className);
         array_shift($pieces); // remove leading "Actindo_"
         
@@ -57,7 +57,7 @@ class Shopware_Controllers_Frontend_Actindo extends Enlight_Controller_Action {
         
         // register own class autoloader
         $loader = Zend_Loader_Autoloader::getInstance();
-        $loader->pushAutoloader(array($this, 'autoloader'), 'Actindo_');
+        $loader->pushAutoloader(array(__CLASS__, 'autoloader'), 'Actindo_');
         
         // instanciate xmlrpc server
         $server = new Actindo_Components_XmlRpc_Server();

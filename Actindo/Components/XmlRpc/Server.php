@@ -22,6 +22,13 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
     
     public function __construct() {
         parent::__construct();
+
+        $loader = Zend_Loader_Autoloader::getInstance();
+        if(!class_exists('Shopware_Controllers_Frontend_Actindo', true))
+        {
+            require(dirname(__FILE__) . '/../../Controllers/Frontend/Actindo.php');
+        }
+        $loader->pushAutoloader(array('Shopware_Controllers_Frontend_Actindo', 'autoloader'), 'Actindo_');
         
         Zend_XmlRpc_Server_Fault::attachFaultException('Exception');
         $this->setCacheFile();
@@ -169,7 +176,7 @@ class Actindo_Components_XmlRpc_Server extends Zend_XmlRpc_Server {
      * tries to find a file path that is writable and sets the absolute path in $cacheFile 
      */
     private function setCacheFile() {
-        $cacheFile = sprintf('%s/cache/actindo.xmlrpc.cache', rtrim(Shopware()->System()->sBasePath, '/'));
+        $cacheFile = Shopware()->OldPath() . 'cache/actindo.xmlrpc.cache';
         if(@touch($cacheFile)) {
             $this->cacheFile = $cacheFile;
         }
