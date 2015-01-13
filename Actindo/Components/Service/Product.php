@@ -905,6 +905,12 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 
                 Shopware()->Db()->update('s_articles_details', $update, $where);
             }
+
+            // update entry in s_articles table
+            $articles = $this->resources->article;
+            $articles->update($articleID, array(
+                'active' => (bool) $product['products_status'],
+            ));
         }
         // stock update for regular article
         else {

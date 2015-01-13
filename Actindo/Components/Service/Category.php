@@ -211,7 +211,7 @@ class Actindo_Components_Service_Category extends Actindo_Components_Service {
     protected function categoryRename($categoryID, $data) {
         $defaultLanguageID = $this->util->getDefaultLanguage();
         $category = $this->getRepository()->find($categoryID);
-        $name = $data['description'][$defaultLanguageID]['name'];
+        $name = html_entity_decode($data['description'][$defaultLanguageID]['name']);
         
         $category->setName($name);
         Shopware()->Models()->persist($category);

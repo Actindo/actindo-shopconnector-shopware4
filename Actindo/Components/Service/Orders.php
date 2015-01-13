@@ -175,6 +175,20 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
                     'ustid'    => (string) $customerBilling['billing']['vatId'],
                 ),
             );
+
+            // Belegsprache
+            if(isset($completeOrder['languageSubShop'])
+                && isset($completeOrder['languageSubShop']['locale'])
+                && isset($completeOrder['languageSubShop']['locale']['locale'])
+                && !empty($completeOrder['languageSubShop']['locale']['locale'])
+            )
+            {
+                $langcode = array_shift(explode('_', $completeOrder['languageSubShop']['locale']['locale']));
+                if(strlen($langcode) === 2)
+                {
+                    $ref['customer']['langcode'] = strtolower($langcode);
+                }
+            }
             
             if($order['orderTime'] instanceof DateTime) {
                 $ref['bill_date'] = $order['orderTime']->format('Y-m-d H:i:s');
