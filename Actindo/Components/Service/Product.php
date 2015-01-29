@@ -1504,8 +1504,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 if($update['filterGroupId'] > 0) {
 					if($property['language_code']!=$defaultLanguage){
 						$id = (int)str_replace('filter','',$property['field_id']);
-						$sql = 'SELECT id FROM s_filter_values WHERE value=\''.$value.'\';';
-						$result = Shopware()->Db()->fetchOne($sql);
+						$sql = 'SELECT id FROM s_filter_values WHERE value = ?';
+						$result = Shopware()->Db()->fetchOne($sql, array($value));
 						$sql = 'SELECT * FROM s_core_translations WHERE objecttype=\'propertyvalue\' and objectkey='.(int)$result.' and objectlanguage='.(int)$property['language_id'].';';
 						$work = Shopware()->Db()->fetchRow($sql);
 						if($work!==false){
