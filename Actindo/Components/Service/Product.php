@@ -113,6 +113,14 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         if(!empty($justList))
         {
             // $ordernumber given but $justList requested, get "list" of just that product
+            if(is_array($filters) && is_array($filters['filter']) && count($filters['filter']))
+            {
+                $filter = $filters['filter'][0];
+                if($filter['field'] == 'art_nr')
+                {
+                    $ordernumber = $filter['data']['value'];
+                }
+            }
             $filters = array_merge($filters, array(
                 'ordernumber' => $ordernumber
             ));
