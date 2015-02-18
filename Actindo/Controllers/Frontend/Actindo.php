@@ -77,6 +77,7 @@ class Shopware_Controllers_Frontend_Actindo extends Enlight_Controller_Action {
         
         // return response
         echo $response;
+        exit;
     }
     
     public function testAction() {
