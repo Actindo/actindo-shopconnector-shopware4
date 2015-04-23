@@ -45,7 +45,6 @@ class Actindo_Components_Service_Settings extends Actindo_Components_Service {
         
         // languages
         $ret['languages'] = $this->util->getLanguages();
-        
         // suppliers (manufacturers)
         $ret['manufacturers'] = array();
         $result = Shopware()->Db()->fetchAll('SELECT `id`, `name` FROM `s_articles_supplier`');

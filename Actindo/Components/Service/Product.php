@@ -1129,26 +1129,33 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         
 		if(count($postData)>0){
 			foreach($postData as $key=>$value){
-				#First Get Entry
-				$sql = 'SELECT * FROM s_core_translations WHERE objecttype=\'article\' and objectkey=\''.(int)$articleID.'\' and objectlanguage='.(int)$key.';';
-				$result = Shopware()->Db()->fetchRow($sql);
-				#Check if result exists
-				if(!$result){
-					#If Not Create it new
-					$data = array();
-					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\','.Shopware()->Db()->quote(serialize($data)).',\''.(int)$articleID.'\',\''.(int)$key.'\');';
-				}else{
-					#If exists, unserialize it and update it
-					$data = unserialize($result['objectdata']);
-					#Data can't bea read, so reinialize it
-					if(!$data)
-						$data = array();
-					foreach($value as $key) $data[$key['field']] = $key['value'];
-					$sql = 'UPDATE s_core_translations SET objectdata='.Shopware()->Db()->quote(serialize($data)).' WHERE id='.(int)$result['id'].';';
-				}
-				#Update DB Data
-				Shopware()->Db()->query($sql);
+                $shops = Shopware()->Db()->fetchAll('SELECT id FROM s_core_shops WHERE locale_id = ? ;',array((int)$key));
+                if(count($shops) > 0)
+                {
+                    foreach($shops as $shop)
+                    {
+                        #First Get Entry
+                        $sql = 'SELECT * FROM s_core_translations WHERE objecttype=\'article\' and objectkey=\''.(int)$articleID.'\' and objectlanguage='.(int)$shop['id'].';';
+                        $result = Shopware()->Db()->fetchRow($sql);
+                        #Check if result exists
+                        if(!$result){
+                            #If Not Create it new
+                            $data = array();
+                            foreach($value as $key) $data[$key['field']] = $key['value'];
+                            $sql = 'INSERT IGNORE INTO s_core_translations (`objecttype`,`objectdata`,`objectkey`,`objectlanguage`) VALUES (\'article\','.Shopware()->Db()->quote(serialize($data)).',\''.(int)$articleID.'\',\''.(int)$key.'\');';
+                        }else{
+                            #If exists, unserialize it and update it
+                            $data = unserialize($result['objectdata']);
+                            #Data can't bea read, so reinialize it
+                            if(!$data)
+                                $data = array();
+                            foreach($value as $key) $data[$key['field']] = $key['value'];
+                            $sql = 'UPDATE s_core_translations SET objectdata='.Shopware()->Db()->quote(serialize($data)).' WHERE id='.(int)$result['id'].';';
+                        }
+                        #Update DB Data
+                        Shopware()->Db()->query($sql);
+                    }
+                }
 			}
 		}
 		
@@ -1242,7 +1249,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _updateContent(&$product, &$update) {
         $update['links'] = $update['downloads'] = array();
-        
+        $id = 0;
         foreach($product['shop']['content'] AS &$content) {
             // attach links to article
             if($content['type'] == 'link') {
@@ -1265,7 +1272,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 $filename = basename($content['content_file_name']);
                 $path = $this->util->writeMediaFile(
                     $content['content'],
-                    $filename,
+                    $id.'.'.$filename,
                     $filetype,
                     $content['content_file_size'],
                     $content['content_file_md5']
@@ -1281,6 +1288,7 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     // do nothing for now, failed file attachment doesn't justify canceling the whole operation
                 }
             }
+            $id++;
         }
     }
     
@@ -1405,7 +1413,6 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      * @param float $basePrice
      */
     protected function _updatePrices($prices, &$target, $taxRate, $pseudoPrices = array(), $basePrice = 0) {
-        
         $taxRate = (float) $taxRate; // @todo check for false
         $price_old = $target['prices'];
         $target['prices'] = array();
@@ -1525,8 +1532,8 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
 								Shopware()->Db()->query($sql);
 							}
 						}else{
-							$sql = 'INSERT INTO s_core_translations 
-								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`) 
+							$sql = 'INSERT INTO s_core_translations
+								(`id`, `objecttype`, `objectdata`, `objectkey`, `objectlanguage`)
 								VALUES
 								(\'\',\'propertyvalue\','.Shopware()->Db()->quote(serialize(array('optionValue'=>$property['field_value']))).','.(int)$result.','.(int)$property['language_id'].');';
 							Shopware()->Db()->query($sql);
@@ -1573,10 +1580,24 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
         switch($product['mwst_stkey']) {
             case '2':
                 $update['taxId'] = 4;
-                break;
+            break;
             case '3':
-            default:
                 $update['taxId'] = 1;
+            break;
+            default:
+                $tax = (float)$product['mwst'];
+                $tax = number_format($tax,2);
+                $sql = 'SELECT id FROM s_core_tax WHERE tax = ?;';
+                $result = Shopware()->Db()->fetchRow($sql,array((string)$tax));
+                if(!empty($result))
+                {
+                    $update['taxId'] = $result['id'];
+                }
+                else
+                {
+                    $update['taxId'] = 1;
+                }
+            break;
         }
     }
     
@@ -1588,11 +1609,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
      */
     protected function _updateTranslations(&$product, &$update) {
         $defaultLanguageID = $this->util->getDefaultLanguage();
-        
         foreach($product['shop']['desc'] AS $translation) {
             $languageID = (int) $translation['language_id'];
             $name = empty($translation['products_name']) ? $product['art_name'] : $translation['products_name'];
-            
             if($languageID == $defaultLanguageID) {
                 // default language, write into main update array
                 $ref =& $update;
@@ -2370,15 +2389,15 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                 FROM
                     s_articles_attributes
                 WHERE
-                    actindo_masternumber='.Shopware()->Db()->quote($orderNumber).'
+                    actindo_masternumber = ?
                 UNION
                 SELECT
                     DISTINCT(articleID)
                 FROM
                     s_articles_details
                 WHERE
-                    ordernumber='.Shopware()->Db()->quote($orderNumber).';';
-            $articleId = Shopware()->Db()->fetchAll($sql);
+                    ordernumber = ? ;';
+            $articleId = Shopware()->Db()->fetchAll($sql,array($orderNumber,$orderNumber));
             //only continue if something was found
             if(count($articleId) > 0)
             {
@@ -2391,9 +2410,9 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                     FROM
                         s_articles_img
                     WHERE
-                        articleID='.(int)$articleId.'
+                        articleID = ?
                     ;';
-                $results = Shopware()->Db()->fetchAll($sql);
+                $results = Shopware()->Db()->fetchAll($sql,array($articleId));
                 //run through images and languages
                 foreach($results as $result)
                 {
@@ -2406,18 +2425,33 @@ class Actindo_Components_Service_Product extends Actindo_Components_Service {
                             $data = array(
                                 'description'=>$images[$result['main']]['image_title'][$language['language_code']]
                             );
-                            //serialize it
-                            $data = serialize($data);
-                            //prepare the statement
                             $sql = '
-                              INSERT INTO
-                              s_core_translations
-                                (objecttype,objectdata,objectkey,objectlanguage)
-                              VALUES
-                                (\'articleimage\','.Shopware()->Db()->quote($data).',\''.(int)$result['id'].'\',\''.(int)$language['language_id'].'\')
-                              ;';
-                            //execute Query
-                            Shopware()->Db()->query($sql);
+                                SELECT
+                                    id
+                                FROM
+                                    s_core_shops
+                                WHERE
+                                    locale_id = ?
+                                ;';
+                            $shops = Shopware()->Db()->fetchAll($sql,array((int)$language['language_id']));
+                            if(count($results) > 0)
+                            {
+                                //serialize it
+                                $data = serialize($data);
+                                //prepare the statement
+                                foreach($shops as $shop)
+                                {
+                                    $sql = '
+                                      INSERT INTO
+                                      s_core_translations
+                                        (objecttype,objectdata,objectkey,objectlanguage)
+                                      VALUES
+                                        (\'articleimage\','.Shopware()->Db()->quote($data).',\''.(int)$result['id'].'\',\''.$shop['id'].'\')
+                                      ;';
+                                    //execute Query
+                                    Shopware()->Db()->query($sql);
+                                }
+                            }
                         }
                     }
                 }
