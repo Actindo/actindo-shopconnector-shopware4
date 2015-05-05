@@ -691,7 +691,7 @@ class Actindo_Components_Util {
     public function getLanguages() {
         if($this->languageCache === null) {
             $this->languageCache = array();
-            
+
             $languages = Shopware()->Db()->fetchAll('
                 SELECT `scl`.`id` AS `language_id`, `scl`.`locale`, `scl`.`language` AS `language_name`, `scl`.`locale` AS `_shopware_code`, `scs`.`default` AS `is_default`
                 FROM `s_core_shops` AS `scs`
@@ -961,8 +961,8 @@ class Actindo_Components_Util {
         if($objectkey !== null) {
             $whereClause .= Shopware()->Db()->quoteInto(' AND `objectkey` = ?', $objectkey);
         }
-        
-        $result = Shopware()->Db()->fetchAll('SELECT `objectdata`, `objectlanguage`, `objectkey` FROM `s_core_translations` ' . $whereClause);
+        $sql = 'SELECT sct.`objectdata`, scs.`locale_id` as `objectlanguage`, sct.`objectkey` FROM `s_core_translations` sct JOIN s_core_shops scs ON scs.id=sct.objectlanguage ' . $whereClause;
+        $result = Shopware()->Db()->fetchAll($sql);
         $translations = array();
         while($row = array_shift($result)) {
             foreach($languages AS $language) {
