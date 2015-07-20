@@ -105,6 +105,9 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
             } catch(Shopware\Components\Api\Exception\NotFoundException $e) {
                 // shouldn't happen but some beta testers reported this error
                 continue;
+            } catch(Shopware\Components\Api\Exception\ParameterMissingException $e) {
+                // shouldn't happen but some beta testers reported this error
+                continue;
             }
             $payment = $this->util->getPaymentMeans($order['paymentId']);
             
@@ -277,12 +280,24 @@ class Actindo_Components_Service_Orders extends Actindo_Components_Service {
 
             // to get order positions via api we'd have to use the getOne() call which fetches far too much information for this purpose
             // => do it manually
-            $ref['rabatt_betrag'] = (float) Shopware()->Db()->fetchOne(sprintf('
-                SELECT ABS(SUM(`price`))
+            $ref['rabatt_betrag'] = 0;
+            $rebates = Shopware()->Db()->fetchAll('
+                SELECT `price`, `tax_rate`
                 FROM `s_order_details`
-                WHERE `orderID` = %d
-                    AND `modus` = 3
-            ', $order['id']));
+                WHERE `orderID` = ?
+                  AND `modus` = 3
+            ', array($order['id']));
+            foreach($rebates AS $rebate)
+            {
+                $price = (float) $rebate['price'];
+                $taxRate = (float) $rebate['tax_rate'];
+                if($taxRate > 0)
+                {
+                    $price /= 1 + $rebate['tax_rate'] / 100;
+                }
+                $ref['rabatt_betrag'] += $price;
+            }
+            $ref['rabatt_betrag'] = abs($ref['rabatt_betrag']);
 
             $ref = Enlight()->Events()->filter(
                 'Actindo_Connector_Service_Orders_getList_filterOrder',
